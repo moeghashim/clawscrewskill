@@ -11,6 +11,7 @@
 import type * as activities from "../activities.js";
 import type * as agents from "../agents.js";
 import type * as approvals from "../approvals.js";
+import type * as b2b from "../b2b.js";
 import type * as kpis from "../kpis.js";
 import type * as seed from "../seed.js";
 import type * as support from "../support.js";
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   agents: typeof agents;
   approvals: typeof approvals;
+  b2b: typeof b2b;
   kpis: typeof kpis;
   seed: typeof seed;
   support: typeof support;

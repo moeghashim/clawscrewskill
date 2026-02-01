@@ -9,3 +9,10 @@ export const listOpen = query({
       .collect();
   },
 });
+
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("supportQueue").collect();
+  },
+});

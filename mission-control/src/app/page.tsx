@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -11,21 +12,30 @@ const STATUS_ORDER = [
   "Done",
 ];
 
+const PIPELINE_STAGES = ["Prospect", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
+
 export default function Home() {
   const agents = useQuery(api.agents.list) ?? [];
   const kpis = useQuery(api.kpis.list) ?? [];
   const tasks = useQuery(api.tasks.listAll) ?? [];
   const approvals = useQuery(api.approvals.listPending) ?? [];
-  const support = useQuery(api.support.listOpen) ?? [];
+  const support = useQuery(api.support.listAll) ?? [];
   const activities = useQuery(api.activities.listLatest) ?? [];
+  const pipeline = useQuery(api.b2b.list) ?? [];
 
-  const tasksByStatus = STATUS_ORDER.reduce<Record<string, typeof tasks>>(
-    (acc, status) => {
+  const tasksByStatus = useMemo(() => {
+    return STATUS_ORDER.reduce<Record<string, typeof tasks>>((acc, status) => {
       acc[status] = tasks.filter((task) => task.status === status);
       return acc;
-    },
-    {}
-  );
+    }, {});
+  }, [tasks]);
+
+  const pipelineByStage = useMemo(() => {
+    return PIPELINE_STAGES.reduce<Record<string, typeof pipeline>>((acc, stage) => {
+      acc[stage] = pipeline.filter((item) => item.stage === stage);
+      return acc;
+    }, {});
+  }, [pipeline]);
 
   return (
     <div className="min-h-screen bg-[#f7f5f2] text-zinc-900">
@@ -62,7 +72,7 @@ export default function Home() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Navigation</h2>
             <ul className="mt-3 space-y-2 text-sm">
-              {["Tasks", "Approvals", "Templates", "Reports", "Settings"].map((item) => (
+              {["Tasks", "Approvals", "Support", "B2B", "Templates", "Reports"].map((item) => (
                 <li key={item} className="rounded-lg px-3 py-2 hover:bg-zinc-100">
                   {item}
                 </li>
@@ -100,6 +110,63 @@ export default function Home() {
               </div>
             ))}
           </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Support Queue</h2>
+              <span className="text-xs text-zinc-400">{support.length} tickets</span>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {support.length === 0 ? (
+                <p className="text-sm text-zinc-500">No support tickets found.</p>
+              ) : (
+                support.map((ticket) => (
+                  <div
+                    key={ticket._id}
+                    className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{ticket.ticketId}</p>
+                      <p className="text-xs text-zinc-500">{ticket.category ?? "General"} · {ticket.status}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">{ticket.priority}</p>
+                      {ticket.sla && (
+                        <p className="text-xs text-amber-600">SLA: {ticket.sla}</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">B2B Pipeline</h2>
+              <span className="text-xs text-zinc-400">{pipeline.length} accounts</span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              {PIPELINE_STAGES.map((stage) => (
+                <div key={stage} className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{stage}</h3>
+                    <span className="text-xs text-zinc-400">{pipelineByStage[stage]?.length ?? 0}</span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {(pipelineByStage[stage] ?? []).map((account) => (
+                      <div key={account._id} className="rounded-lg border border-zinc-100 bg-white px-3 py-2">
+                        <p className="text-sm font-medium">{account.accountName}</p>
+                        {account.nextStep && (
+                          <p className="text-xs text-zinc-500">Next: {account.nextStep}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </main>
 
         <aside className="space-y-6">
@@ -122,20 +189,6 @@ export default function Home() {
               approvals.map((approval) => (
                 <div key={approval._id} className="mt-3 rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm text-amber-800">
                   {approval.type} — pending
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Support Queue</h2>
-            {support.length === 0 ? (
-              <p className="mt-2 text-sm text-zinc-500">No open tickets.</p>
-            ) : (
-              support.map((ticket) => (
-                <div key={ticket._id} className="mt-2">
-                  <p className="text-sm">{ticket.ticketId} · {ticket.category ?? "General"} · {ticket.priority}</p>
-                  {ticket.sla && <p className="text-xs text-zinc-500">SLA: {ticket.sla}</p>}
                 </div>
               ))
             )}
