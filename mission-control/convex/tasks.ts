@@ -4,7 +4,17 @@ import { v } from "convex/values";
 export const listByStatus = query({
   args: { status: v.string() },
   handler: async (ctx, { status }) => {
-    return await ctx.db.query("tasks").withIndex("by_status", (q) => q.eq("status", status)).collect();
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", status))
+      .collect();
+  },
+});
+
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("tasks").collect();
   },
 });
 
