@@ -115,6 +115,29 @@
   - Notes and decision log
 - Thread subscriptions and mentions: enabled
 
+### 5.1) Agent management process
+- Add agent:
+  - Create agent record with name, role, status, focus, and workload
+  - Assign initial channels and default queue
+  - Announce in Live Feed
+- Remove agent:
+  - Mark agent status as inactive
+  - Reassign open tasks to another agent or Inbox
+  - Archive agent record (retain history)
+
+### 5.2) Task assignment process
+- Intake: tasks land in Inbox
+- Assign:
+  - Set Owner agent
+  - Set priority and due date
+  - Move status to Assigned
+- Start:
+  - Agent moves task to In Progress
+  - Adds first update in Notes/Decision Log
+- Complete:
+  - Move to Review → Done
+  - Add completion note + KPI impact
+
 ## 6) Notifications
 - Daily standup: 09:00 America/Chicago
 - Summary destination: in-app plus Telegram-style digest format
