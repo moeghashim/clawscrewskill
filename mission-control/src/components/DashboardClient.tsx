@@ -61,21 +61,25 @@ export default function DashboardClient() {
 
       <div className="grid grid-cols-[260px_1fr_320px] gap-6 px-6 py-6">
         <aside className="space-y-6">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+          <div className="min-h-[120px] rounded-2xl border border-zinc-200 bg-white p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Agents</h2>
             <div className="mt-4 space-y-3">
-              {agents.map((agent) => (
-                <div
-                  key={agent._id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{agent.name}</p>
-                    <p className="text-xs text-zinc-500">{agent.role}</p>
+              {agents.length === 0 ? (
+                <p className="text-sm text-zinc-500">No agents yet.</p>
+              ) : (
+                agents.map((agent) => (
+                  <div
+                    key={agent._id}
+                    className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{agent.name}</p>
+                      <p className="text-xs text-zinc-500">{agent.role}</p>
+                    </div>
+                    <span className="text-xs font-semibold text-emerald-600">{agent.status}</span>
                   </div>
-                  <span className="text-xs font-semibold text-emerald-600">{agent.status}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -108,7 +112,7 @@ export default function DashboardClient() {
 
           <div className="grid grid-cols-5 gap-4">
             {STATUS_ORDER.map((status) => (
-              <div key={status} className="rounded-2xl border border-zinc-200 bg-white p-3">
+              <div key={status} className="min-h-[120px] rounded-2xl border border-zinc-200 bg-white p-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold">{status}</h3>
                   <span className="text-xs text-zinc-400">{tasksByStatus[status]?.length ?? 0}</span>
@@ -184,14 +188,18 @@ export default function DashboardClient() {
         </main>
 
         <aside className="space-y-6">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+          <div className="min-h-[120px] rounded-2xl border border-zinc-200 bg-white p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Live Feed</h2>
             <ul className="mt-3 space-y-3 text-sm text-zinc-700">
-              {activities.map((item) => (
-                <li key={item._id} className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-                  {item.message}
-                </li>
-              ))}
+              {activities.length === 0 ? (
+                <li className="text-sm text-zinc-500">No activity yet.</li>
+              ) : (
+                activities.map((item) => (
+                  <li key={item._id} className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+                    {item.message}
+                  </li>
+                ))
+              )}
             </ul>
           </div>
 
