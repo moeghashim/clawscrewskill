@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "installCommand": "cd mission-control && npm install",
+  "buildCommand": "cd mission-control && npm run build",
+  "outputDirectory": "mission-control/.next"
+}
