@@ -165,12 +165,15 @@ export default function DashboardClient() {
 
           <div className="grid grid-cols-5 gap-4">
             {STATUS_ORDER.map((status) => (
-              <div key={status} className="min-h-[120px] rounded-2xl border border-zinc-200 bg-white p-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">{status}</h3>
+              <div key={status} className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white">
+                <div className="flex items-center justify-between border-b border-zinc-100 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex h-2 w-2 rounded-full ${statusColor(status)}`} />
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600">{status}</h3>
+                  </div>
                   <span className="text-xs text-zinc-400">{tasksByStatus[status]?.length ?? 0}</span>
                 </div>
-                <div className="mt-3 space-y-3">
+                <div className="flex-1 space-y-3 p-3">
                   {(tasksByStatus[status] ?? []).map((task) => {
                     const isActive = task.status === "In Progress" || task.status === "Optimizing";
                     return (
@@ -180,10 +183,10 @@ export default function DashboardClient() {
                         onClick={() => setSelectedTaskId(task._id)}
                         className="w-full rounded-xl border border-zinc-200 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
                             <span className={`inline-flex h-2.5 w-2.5 rounded-full ${statusColor(task.status)}`} />
-                            <p className="text-sm font-medium">{task.title}</p>
+                            <p className="truncate text-sm font-medium">{task.title}</p>
                           </div>
                           {isActive && (
                             <span className="inline-flex items-center text-xs text-emerald-600">
