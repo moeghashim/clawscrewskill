@@ -122,4 +122,11 @@ export default defineSchema({
   })
     .index("by_meetingType", ["meetingType"])
     .index("by_date", ["date"]),
+
+  standups: defineTable({
+    date: v.string(),
+    summary: v.string(),
+    statusBreakdown: v.string(),
+    blockers: v.array(v.string()),
+  }).index("by_date", ["date"]),
 });

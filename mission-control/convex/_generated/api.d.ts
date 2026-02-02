@@ -18,6 +18,7 @@ import type * as knowledgeBase from "../knowledgeBase.js";
 import type * as kpis from "../kpis.js";
 import type * as meetingNotes from "../meetingNotes.js";
 import type * as seed from "../seed.js";
+import type * as standup from "../standup.js";
 import type * as support from "../support.js";
 import type * as tasks from "../tasks.js";
 
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   kpis: typeof kpis;
   meetingNotes: typeof meetingNotes;
   seed: typeof seed;
+  standup: typeof standup;
   support: typeof support;
   tasks: typeof tasks;
 }>;

@@ -5,3 +5,4 @@
 - Seeded calendar items to validate grouping and visual density in the UI.
 - Introduced a knowledge base table to track playbooks by category with quick summaries + links.
 - Added meeting notes table + dashboard panel to capture summaries and next steps by meeting type.
+- Implemented standup generation that summarizes tasks, blockers, approvals, support, and pipeline counts.

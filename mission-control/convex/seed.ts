@@ -169,6 +169,13 @@ export const run = mutation({
       nextSteps: ["Refresh macros", "Define SLA alert triggers"],
     });
 
+    await ctx.db.insert("standups", {
+      date: "2026-02-02",
+      summary: "Tasks: 2 total | Blocked: 0 | Approvals pending: 1 | Support open: 1 | Pipeline accounts: 1",
+      statusBreakdown: "Assigned: 1 · In Progress: 1",
+      blockers: [],
+    });
+
     return { ok: true };
   },
 });
