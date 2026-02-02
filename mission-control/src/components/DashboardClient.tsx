@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMemo } from "react";
+import Link from "next/link";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 
 const STATUS_ORDER = [
   "Inbox",
@@ -39,16 +39,6 @@ export default function DashboardClient() {
   const alerts = useQuery(api.alerts.listLatest, { limit: 5 }) ?? [];
   const auditLogs = useQuery(api.audit.listLatest, { limit: 5 }) ?? [];
 
-  const createAgent = useMutation(api.agents.create);
-  const assignTask = useMutation(api.tasks.assign);
-
-  const [agentName, setAgentName] = useState("");
-  const [agentRole, setAgentRole] = useState("");
-  const [agentStatus, setAgentStatus] = useState<"idle" | "active" | "blocked">("active");
-  const [assignmentTaskId, setAssignmentTaskId] = useState<Id<"tasks"> | "">("");
-  const [assignmentAgentId, setAssignmentAgentId] = useState<Id<"agents"> | "">("");
-  const [assignmentStatus, setAssignmentStatus] = useState("Assigned");
-
   const tasksByStatus = useMemo(() => {
     return STATUS_ORDER.reduce<Record<string, typeof tasks>>((acc, status) => {
       acc[status] = tasks.filter((task) => task.status === status);
@@ -69,36 +59,6 @@ export default function DashboardClient() {
       return acc;
     }, {});
   }, [calendarItems]);
-
-  const handleCreateAgent = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!agentName.trim() || !agentRole.trim()) {
-      return;
-    }
-    await createAgent({
-      name: agentName.trim(),
-      role: agentRole.trim(),
-      status: agentStatus,
-    });
-    setAgentName("");
-    setAgentRole("");
-    setAgentStatus("active");
-  };
-
-  const handleAssignTask = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!assignmentTaskId || !assignmentAgentId) {
-      return;
-    }
-    await assignTask({
-      taskId: assignmentTaskId,
-      ownerIds: [assignmentAgentId],
-      status: assignmentStatus,
-    });
-    setAssignmentTaskId("");
-    setAssignmentAgentId("");
-    setAssignmentStatus("Assigned");
-  };
 
   return (
     <div className="min-h-screen bg-[#f7f5f2] text-zinc-900">
@@ -147,6 +107,12 @@ export default function DashboardClient() {
                   {item}
                 </li>
               ))}
+              <li className="rounded-lg px-3 py-2 hover:bg-zinc-100">
+                <Link href="/agents/new" className="text-sm">Add Agent</Link>
+              </li>
+              <li className="rounded-lg px-3 py-2 hover:bg-zinc-100">
+                <Link href="/tasks/assign" className="text-sm">Assign Task</Link>
+              </li>
             </ul>
           </div>
         </aside>
@@ -168,89 +134,22 @@ export default function DashboardClient() {
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Admin Controls</h2>
-              <span className="text-xs text-zinc-400">Add agents & assign tasks</span>
+              <h2 className="text-sm font-semibold">Admin Shortcuts</h2>
+              <span className="text-xs text-zinc-400">Quick links</span>
             </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <form onSubmit={handleCreateAgent} className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Add Agent</p>
-                <div className="mt-3 space-y-3">
-                  <input
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-                    placeholder="Name"
-                    value={agentName}
-                    onChange={(event) => setAgentName(event.target.value)}
-                  />
-                  <input
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-                    placeholder="Role"
-                    value={agentRole}
-                    onChange={(event) => setAgentRole(event.target.value)}
-                  />
-                  <select
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-                    value={agentStatus}
-                    onChange={(event) => setAgentStatus(event.target.value as "idle" | "active" | "blocked")}
-                  >
-                    <option value="active">active</option>
-                    <option value="idle">idle</option>
-                    <option value="blocked">blocked</option>
-                  </select>
-                </div>
-                <button
-                  type="submit"
-                  className="mt-4 w-full rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white"
-                >
-                  Create agent
-                </button>
-              </form>
-
-              <form onSubmit={handleAssignTask} className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Assign Task</p>
-                <div className="mt-3 space-y-3">
-                  <select
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-                    value={assignmentTaskId}
-                    onChange={(event) => setAssignmentTaskId(event.target.value as Id<"tasks"> | "")}
-                  >
-                    <option value="">Select task</option>
-                    {tasks.map((task) => (
-                      <option key={task._id} value={task._id}>
-                        {task.title}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-                    value={assignmentAgentId}
-                    onChange={(event) => setAssignmentAgentId(event.target.value as Id<"agents"> | "")}
-                  >
-                    <option value="">Select agent</option>
-                    {agents.map((agent) => (
-                      <option key={agent._id} value={agent._id}>
-                        {agent.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-                    value={assignmentStatus}
-                    onChange={(event) => setAssignmentStatus(event.target.value)}
-                  >
-                    {STATUS_ORDER.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  type="submit"
-                  className="mt-4 w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white"
-                >
-                  Assign task
-                </button>
-              </form>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <Link
+                href="/agents/new"
+                className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                Add Agent →
+              </Link>
+              <Link
+                href="/tasks/assign"
+                className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                Assign Task →
+              </Link>
             </div>
           </div>
 
