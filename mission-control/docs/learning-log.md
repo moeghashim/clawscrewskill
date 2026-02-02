@@ -14,3 +14,4 @@
 - Added dedicated admin pages for adding agents and assigning tasks, linked from navigation.
 - Added role dropdown for agents with option to add a new custom role.
 - Expanded agent creation to capture function, operating style, and deliverables.
+- Added markdown import for agent details with role auto-mapping.

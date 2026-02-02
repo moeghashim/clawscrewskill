@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type ChangeEvent } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -20,6 +20,7 @@ export default function AdminAgentForm() {
   const [deliverablesInput, setDeliverablesInput] = useState("");
   const [agentStatus, setAgentStatus] = useState<"idle" | "active" | "blocked">("active");
   const [created, setCreated] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const handleCreateAgent = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,11 +53,69 @@ export default function AdminAgentForm() {
     setCreated("Agent created");
   };
 
+  const parseAgentMarkdown = (content: string) => {
+    const lines = content.split(/\r?\n/);
+    const data: Record<string, string> = {};
+    const deliverables: string[] = [];
+    let inDeliverables = false;
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      if (/^deliverables/i.test(line)) {
+        inDeliverables = true;
+        continue;
+      }
+      if (inDeliverables && /^-\s+/.test(line)) {
+        deliverables.push(line.replace(/^[-*]\s+/, "").trim());
+        continue;
+      }
+      inDeliverables = false;
+      const match = line.match(/^([^:]+):\s*(.+)$/);
+      if (match) {
+        data[match[1].trim().toLowerCase()] = match[2].trim();
+      }
+    }
+
+    return { data, deliverables };
+  };
+
+  const handleMarkdownUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    setImportError(null);
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const content = await file.text();
+      const { data, deliverables } = parseAgentMarkdown(content);
+      const roleValue = data.role ?? "";
+      const hasRoleOption = roleOptions.includes(roleValue);
+      setAgentName(data.name ?? "");
+      setAgentFunction(data.function ?? "");
+      setAgentRole(roleValue ? (hasRoleOption ? roleValue : "custom") : "");
+      setCustomRole(hasRoleOption ? "" : roleValue);
+      setOperatingStyle(data["operating style"] ?? "");
+      setDeliverablesInput(deliverables.join("\n"));
+    } catch {
+      setImportError("Could not read markdown file");
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-xl rounded-2xl border border-zinc-200 bg-white p-6">
       <h1 className="text-lg font-semibold">Add Agent</h1>
       <p className="mt-1 text-sm text-zinc-500">Create a new operator record for Mission Control.</p>
       <form onSubmit={handleCreateAgent} className="mt-4 space-y-3">
+        <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-3 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Import .md</p>
+          <p className="mt-1 text-xs text-zinc-500">Use keys like Name, Function, Role, Operating Style, Deliverables.</p>
+          <input
+            type="file"
+            accept=".md"
+            className="mt-2 block w-full text-sm text-zinc-600"
+            onChange={handleMarkdownUpload}
+          />
+          {importError && <p className="mt-2 text-xs text-rose-600">{importError}</p>}
+        </div>
         <input
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
           placeholder="Name"
