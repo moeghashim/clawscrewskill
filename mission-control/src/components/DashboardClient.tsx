@@ -183,11 +183,7 @@ export default function DashboardClient() {
                         onClick={() => setSelectedTaskId(task._id)}
                         className="w-full rounded-xl border border-zinc-200 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <span className={`inline-flex h-2.5 w-2.5 rounded-full ${statusColor(task.status)}`} />
-                            <p className="truncate text-sm font-medium">{task.title}</p>
-                          </div>
+                        <div className="space-y-1">
                           {isActive && (
                             <span className="inline-flex items-center text-xs text-emerald-600">
                               <svg
@@ -202,6 +198,10 @@ export default function DashboardClient() {
                               Processing
                             </span>
                           )}
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className={`inline-flex h-2.5 w-2.5 rounded-full ${statusColor(task.status)}`} />
+                            <p className="truncate text-sm font-medium">{task.title}</p>
+                          </div>
                         </div>
                         <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
                           <span>{task.channel}</span>
