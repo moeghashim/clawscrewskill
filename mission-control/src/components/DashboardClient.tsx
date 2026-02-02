@@ -21,6 +21,8 @@ const PIPELINE_STAGES = [
   "Lost",
 ];
 
+const CALENDAR_STATUSES = ["Planned", "In Production", "Scheduled", "Published"];
+
 export default function DashboardClient() {
   const agents = useQuery(api.agents.list) ?? [];
   const kpis = useQuery(api.kpis.list) ?? [];
@@ -29,6 +31,7 @@ export default function DashboardClient() {
   const support = useQuery(api.support.listAll) ?? [];
   const activities = useQuery(api.activities.listLatest) ?? [];
   const pipeline = useQuery(api.b2b.list) ?? [];
+  const calendarItems = useQuery(api.contentCalendar.listAll) ?? [];
 
   const tasksByStatus = useMemo(() => {
     return STATUS_ORDER.reduce<Record<string, typeof tasks>>((acc, status) => {
@@ -43,6 +46,13 @@ export default function DashboardClient() {
       return acc;
     }, {});
   }, [pipeline]);
+
+  const calendarByStatus = useMemo(() => {
+    return CALENDAR_STATUSES.reduce<Record<string, typeof calendarItems>>((acc, status) => {
+      acc[status] = calendarItems.filter((item) => item.status === status);
+      return acc;
+    }, {});
+  }, [calendarItems]);
 
   return (
     <div className="min-h-screen bg-[#f7f5f2] text-zinc-900">
@@ -86,7 +96,7 @@ export default function DashboardClient() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Navigation</h2>
             <ul className="mt-3 space-y-2 text-sm">
-              {["Tasks", "Approvals", "Support", "B2B", "Templates", "Reports"].map((item) => (
+              {["Tasks", "Content Calendar", "Approvals", "Support", "B2B", "Templates", "Reports"].map((item) => (
                 <li key={item} className="rounded-lg px-3 py-2 hover:bg-zinc-100">
                   {item}
                 </li>
@@ -127,6 +137,40 @@ export default function DashboardClient() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Content Calendar</h2>
+              <span className="text-xs text-zinc-400">{calendarItems.length} items</span>
+            </div>
+            <div className="mt-4 grid grid-cols-4 gap-4">
+              {CALENDAR_STATUSES.map((status) => (
+                <div key={status} className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{status}</h3>
+                    <span className="text-xs text-zinc-400">{calendarByStatus[status]?.length ?? 0}</span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {(calendarByStatus[status] ?? []).map((item) => (
+                      <div key={item._id} className="rounded-lg border border-zinc-100 bg-white px-3 py-2">
+                        <p className="text-sm font-medium">{item.title}</p>
+                        <p className="text-xs text-zinc-500">
+                          {item.platform}
+                          {item.publishDate ? ` · ${item.publishDate}` : ""}
+                        </p>
+                        {item.campaign && (
+                          <p className="text-xs text-zinc-400">{item.campaign}</p>
+                        )}
+                      </div>
+                    ))}
+                    {(calendarByStatus[status] ?? []).length === 0 && (
+                      <p className="text-xs text-zinc-400">No items</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-4">

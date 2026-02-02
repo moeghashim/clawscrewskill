@@ -89,4 +89,18 @@ export default defineSchema({
     type: v.string(),
     content: v.string(),
   }).index("by_type", ["type"]),
+
+  contentCalendar: defineTable({
+    title: v.string(),
+    platform: v.string(),
+    status: v.string(),
+    publishDate: v.optional(v.string()),
+    ownerId: v.optional(v.id("agents")),
+    campaign: v.optional(v.string()),
+    hook: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  })
+    .index("by_status", ["status"])
+    .index("by_platform", ["platform"])
+    .index("by_publishDate", ["publishDate"]),
 });

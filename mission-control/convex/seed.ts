@@ -113,6 +113,28 @@ export const run = mutation({
       content: "Thanks for reaching out — we’re looking into the delay and will update you within 24 hours.",
     });
 
+    await ctx.db.insert("contentCalendar", {
+      title: "TikTok: 3 steps to launch on Babanuj",
+      platform: "TikTok",
+      status: "Planned",
+      publishDate: "2026-02-04",
+      ownerId: naseemId,
+      campaign: "Seller onboarding",
+      hook: "Ready to launch your first product in 72 hours?",
+      notes: "Keep under 35s, add on-screen checklist.",
+    });
+
+    await ctx.db.insert("contentCalendar", {
+      title: "IG Reels: Behind the scenes fulfillment",
+      platform: "Instagram",
+      status: "Scheduled",
+      publishDate: "2026-02-06",
+      ownerId: hassounId,
+      campaign: "Trust builders",
+      hook: "Here’s what happens after you click checkout",
+      notes: "Capture warehouse shots, end with CTA.",
+    });
+
     return { ok: true };
   },
 });
