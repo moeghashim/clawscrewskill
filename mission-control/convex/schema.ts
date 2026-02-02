@@ -103,4 +103,12 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_platform", ["platform"])
     .index("by_publishDate", ["publishDate"]),
+
+  knowledgeBase: defineTable({
+    title: v.string(),
+    category: v.string(),
+    summary: v.string(),
+    ownerId: v.optional(v.id("agents")),
+    link: v.optional(v.string()),
+  }).index("by_category", ["category"]),
 });

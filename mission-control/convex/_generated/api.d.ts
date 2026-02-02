@@ -14,6 +14,7 @@ import type * as approvals from "../approvals.js";
 import type * as b2b from "../b2b.js";
 import type * as contentCalendar from "../contentCalendar.js";
 import type * as http from "../http.js";
+import type * as knowledgeBase from "../knowledgeBase.js";
 import type * as kpis from "../kpis.js";
 import type * as seed from "../seed.js";
 import type * as support from "../support.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   b2b: typeof b2b;
   contentCalendar: typeof contentCalendar;
   http: typeof http;
+  knowledgeBase: typeof knowledgeBase;
   kpis: typeof kpis;
   seed: typeof seed;
   support: typeof support;

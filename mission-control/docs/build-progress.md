@@ -10,7 +10,7 @@
 - [x] B2B pipeline
 - [x] Templates library (data + seed)
 - [x] Content calendar (data + UI)
-- [ ] Knowledge base
+- [x] Knowledge base
 - [ ] Meeting notes hub
 
 ## Process/Automation

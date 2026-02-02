@@ -135,6 +135,22 @@ export const run = mutation({
       notes: "Capture warehouse shots, end with CTA.",
     });
 
+    await ctx.db.insert("knowledgeBase", {
+      title: "Support escalation playbook",
+      category: "Support",
+      summary: "Escalate delivery delays after 48h; include order ID, tracking, and customer sentiment.",
+      ownerId: aminaId,
+      link: "https://docs.google.com/document/d/placeholder",
+    });
+
+    await ctx.db.insert("knowledgeBase", {
+      title: "SEO technical audit checklist",
+      category: "SEO",
+      summary: "Run crawl, check indexation, CWV, and prioritize fixes by impact vs effort.",
+      ownerId: naseemId,
+      link: "https://docs.google.com/document/d/placeholder",
+    });
+
     return { ok: true };
   },
 });

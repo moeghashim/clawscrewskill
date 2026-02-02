@@ -32,6 +32,7 @@ export default function DashboardClient() {
   const activities = useQuery(api.activities.listLatest) ?? [];
   const pipeline = useQuery(api.b2b.list) ?? [];
   const calendarItems = useQuery(api.contentCalendar.listAll) ?? [];
+  const knowledgeItems = useQuery(api.knowledgeBase.listAll) ?? [];
 
   const tasksByStatus = useMemo(() => {
     return STATUS_ORDER.reduce<Record<string, typeof tasks>>((acc, status) => {
@@ -96,7 +97,7 @@ export default function DashboardClient() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Navigation</h2>
             <ul className="mt-3 space-y-2 text-sm">
-              {["Tasks", "Content Calendar", "Approvals", "Support", "B2B", "Templates", "Reports"].map((item) => (
+              {["Tasks", "Content Calendar", "Knowledge Base", "Approvals", "Support", "B2B", "Templates", "Reports"].map((item) => (
                 <li key={item} className="rounded-lg px-3 py-2 hover:bg-zinc-100">
                   {item}
                 </li>
@@ -170,6 +171,31 @@ export default function DashboardClient() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Knowledge Base</h2>
+              <span className="text-xs text-zinc-400">{knowledgeItems.length} docs</span>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {knowledgeItems.length === 0 ? (
+                <p className="text-sm text-zinc-500">No playbooks yet.</p>
+              ) : (
+                knowledgeItems.map((item) => (
+                  <div key={item._id} className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{item.title}</p>
+                      <span className="text-xs text-zinc-500">{item.category}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-zinc-500">{item.summary}</p>
+                    {item.link && (
+                      <p className="mt-2 text-xs text-emerald-700">{item.link}</p>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
