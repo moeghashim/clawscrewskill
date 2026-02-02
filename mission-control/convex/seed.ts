@@ -183,6 +183,24 @@ export const run = mutation({
       createdAt: "2026-02-02T10:00:00.000Z",
     });
 
+    await ctx.db.insert("policies", {
+      key: "budget_change",
+      description: "Any paid media budget change",
+      requiresApproval: true,
+    });
+
+    await ctx.db.insert("policies", {
+      key: "policy_sensitive",
+      description: "Policy or compliance sensitive action",
+      requiresApproval: true,
+    });
+
+    await ctx.db.insert("policies", {
+      key: "content_publish",
+      description: "Publish content to social platforms",
+      requiresApproval: false,
+    });
+
     return { ok: true };
   },
 });

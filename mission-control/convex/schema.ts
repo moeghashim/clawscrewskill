@@ -138,4 +138,10 @@ export default defineSchema({
   })
     .index("by_type", ["type"])
     .index("by_severity", ["severity"]),
+
+  policies: defineTable({
+    key: v.string(),
+    description: v.string(),
+    requiresApproval: v.boolean(),
+  }).index("by_key", ["key"]),
 });

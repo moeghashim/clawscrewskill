@@ -16,5 +16,5 @@
 ## Process/Automation
 - [x] Daily standup generator (09:00 America/Chicago)
 - [x] Alerts engine (blockers/SLA/KPI regression)
-- [ ] Autonomy + approvals enforcement
+- [x] Autonomy + approvals enforcement
 - [ ] Documentation/audit trail automation
