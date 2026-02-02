@@ -15,3 +15,4 @@
 - Added role dropdown for agents with option to add a new custom role.
 - Expanded agent creation to capture function, operating style, and deliverables.
 - Added markdown import for agent details with role auto-mapping.
+- Added header indicator for live agent/task counts.

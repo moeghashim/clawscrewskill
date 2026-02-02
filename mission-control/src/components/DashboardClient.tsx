@@ -71,6 +71,9 @@ export default function DashboardClient() {
           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
             Online
           </span>
+          <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600">
+            {agents.length} agents · {tasks.length} tasks
+          </span>
           <span className="text-sm text-zinc-500">21:15</span>
         </div>
       </header>
