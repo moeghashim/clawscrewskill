@@ -20,6 +20,7 @@ export const record = mutation({
     rationale: v.string(),
     expectedImpact: v.optional(v.string()),
     measurementPlan: v.optional(v.string()),
+    learning: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const entry = {

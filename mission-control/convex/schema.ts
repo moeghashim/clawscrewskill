@@ -8,7 +8,12 @@ export default defineSchema({
     role: v.string(),
     operatingStyle: v.string(),
     deliverables: v.array(v.string()),
-    status: v.union(v.literal("idle"), v.literal("active"), v.literal("blocked")),
+    status: v.union(
+      v.literal("idle"),
+      v.literal("active"),
+      v.literal("blocked"),
+      v.literal("inactive")
+    ),
     sessionKey: v.optional(v.string()),
     focus: v.optional(v.string()),
     workload: v.optional(v.number()),
@@ -156,6 +161,7 @@ export default defineSchema({
     rationale: v.string(),
     expectedImpact: v.optional(v.string()),
     measurementPlan: v.optional(v.string()),
+    learning: v.optional(v.string()),
     timestamp: v.string(),
   })
     .index("by_entityType", ["entityType"])

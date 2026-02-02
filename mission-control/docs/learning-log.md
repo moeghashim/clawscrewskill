@@ -16,3 +16,4 @@
 - Expanded agent creation to capture function, operating style, and deliverables.
 - Added markdown import for agent details with role auto-mapping.
 - Added header indicator for live agent/task counts.
+- Added agent deactivation flow with required work summary + learning captured to audit logs.

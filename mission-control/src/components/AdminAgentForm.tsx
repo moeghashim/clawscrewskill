@@ -18,7 +18,7 @@ export default function AdminAgentForm() {
   const [customRole, setCustomRole] = useState("");
   const [operatingStyle, setOperatingStyle] = useState("");
   const [deliverablesInput, setDeliverablesInput] = useState("");
-  const [agentStatus, setAgentStatus] = useState<"idle" | "active" | "blocked">("active");
+  const [agentStatus, setAgentStatus] = useState<"idle" | "active" | "blocked" | "inactive">("active");
   const [created, setCreated] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
@@ -165,11 +165,14 @@ export default function AdminAgentForm() {
         <select
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
           value={agentStatus}
-          onChange={(event) => setAgentStatus(event.target.value as "idle" | "active" | "blocked")}
+          onChange={(event) =>
+            setAgentStatus(event.target.value as "idle" | "active" | "blocked" | "inactive")
+          }
         >
           <option value="active">active</option>
           <option value="idle">idle</option>
           <option value="blocked">blocked</option>
+          <option value="inactive">inactive</option>
         </select>
         <button type="submit" className="w-full rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white">
           Create agent
