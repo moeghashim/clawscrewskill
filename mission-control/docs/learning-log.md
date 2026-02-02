@@ -17,3 +17,4 @@
 - Added markdown import for agent details with role auto-mapping.
 - Added header indicator for live agent/task counts.
 - Added agent deactivation flow with required work summary + learning captured to audit logs.
+- Updated task assignment to create new tasks (auto-assigned) instead of selecting existing tasks.
