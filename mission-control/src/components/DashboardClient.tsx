@@ -90,7 +90,7 @@ export default function DashboardClient() {
                   >
                     <div>
                       <p className="text-sm font-medium">{agent.name}</p>
-                      <p className="text-xs text-zinc-500">{agent.role}</p>
+                      <p className="text-xs text-zinc-500">{agent.role} · {agent.function}</p>
                     </div>
                     <span className="text-xs font-semibold text-emerald-600">{agent.status}</span>
                   </div>

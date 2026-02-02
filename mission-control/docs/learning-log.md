@@ -13,3 +13,4 @@
 - Added admin controls to create agents and assign tasks from the dashboard.
 - Added dedicated admin pages for adding agents and assigning tasks, linked from navigation.
 - Added role dropdown for agents with option to add a new custom role.
+- Expanded agent creation to capture function, operating style, and deliverables.

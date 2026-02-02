@@ -13,8 +13,11 @@ export default function AdminAgentForm() {
   }, [agents]);
 
   const [agentName, setAgentName] = useState("");
+  const [agentFunction, setAgentFunction] = useState("");
   const [agentRole, setAgentRole] = useState("");
   const [customRole, setCustomRole] = useState("");
+  const [operatingStyle, setOperatingStyle] = useState("");
+  const [deliverablesInput, setDeliverablesInput] = useState("");
   const [agentStatus, setAgentStatus] = useState<"idle" | "active" | "blocked">("active");
   const [created, setCreated] = useState<string | null>(null);
 
@@ -22,17 +25,29 @@ export default function AdminAgentForm() {
     event.preventDefault();
     setCreated(null);
     const resolvedRole = agentRole === "custom" ? customRole.trim() : agentRole.trim();
-    if (!agentName.trim() || !resolvedRole) {
+    const deliverables = deliverablesInput
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (!agentName.trim() || !agentFunction.trim() || !resolvedRole || !operatingStyle.trim()) {
       return;
     }
+
     await createAgent({
       name: agentName.trim(),
+      function: agentFunction.trim(),
       role: resolvedRole,
+      operatingStyle: operatingStyle.trim(),
+      deliverables,
       status: agentStatus,
     });
     setAgentName("");
+    setAgentFunction("");
     setAgentRole("");
     setCustomRole("");
+    setOperatingStyle("");
+    setDeliverablesInput("");
     setAgentStatus("active");
     setCreated("Agent created");
   };
@@ -47,6 +62,12 @@ export default function AdminAgentForm() {
           placeholder="Name"
           value={agentName}
           onChange={(event) => setAgentName(event.target.value)}
+        />
+        <input
+          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
+          placeholder="Function (e.g., SEO, Support, B2B)"
+          value={agentFunction}
+          onChange={(event) => setAgentFunction(event.target.value)}
         />
         <select
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
@@ -69,6 +90,19 @@ export default function AdminAgentForm() {
             onChange={(event) => setCustomRole(event.target.value)}
           />
         )}
+        <textarea
+          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
+          placeholder="Operating style"
+          value={operatingStyle}
+          onChange={(event) => setOperatingStyle(event.target.value)}
+        />
+        <textarea
+          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
+          placeholder="Deliverables (one per line)"
+          value={deliverablesInput}
+          onChange={(event) => setDeliverablesInput(event.target.value)}
+          rows={4}
+        />
         <select
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
           value={agentStatus}

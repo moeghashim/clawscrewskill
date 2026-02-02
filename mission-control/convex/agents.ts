@@ -11,7 +11,10 @@ export const list = query({
 export const create = mutation({
   args: {
     name: v.string(),
+    function: v.string(),
     role: v.string(),
+    operatingStyle: v.string(),
+    deliverables: v.array(v.string()),
     status: v.union(v.literal("idle"), v.literal("active"), v.literal("blocked")),
     sessionKey: v.optional(v.string()),
     focus: v.optional(v.string()),

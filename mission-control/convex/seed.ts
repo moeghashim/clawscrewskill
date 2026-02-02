@@ -5,7 +5,10 @@ export const run = mutation({
   handler: async (ctx) => {
     const hassounId = await ctx.db.insert("agents", {
       name: "Hassoun",
+      function: "Master Orchestrator",
       role: "Master Orchestrator",
+      operatingStyle: "Calm, decisive, high leverage",
+      deliverables: ["Weekly outcomes", "Resolved blockers", "Clear priorities"],
       status: "active",
       sessionKey: "agent:main:main",
       focus: "Daily execution + approvals",
@@ -14,7 +17,10 @@ export const run = mutation({
 
     const naseemId = await ctx.db.insert("agents", {
       name: "Naseem",
+      function: "SEO",
       role: "SEO Master",
+      operatingStyle: "Technical, structured, evidence-first",
+      deliverables: ["Technical audit", "SEO backlog", "Monthly SEO report"],
       status: "active",
       sessionKey: "agent:seo:main",
       focus: "Technical SEO backlog",
@@ -23,7 +29,10 @@ export const run = mutation({
 
     const aminaId = await ctx.db.insert("agents", {
       name: "Amina",
+      function: "Support",
       role: "Customer Support Agent",
+      operatingStyle: "Warm, precise, de-escalation-first",
+      deliverables: ["Inbox triage", "Macros", "Weekly issues report"],
       status: "active",
       sessionKey: "agent:support:main",
       focus: "Inbox triage + macros",
