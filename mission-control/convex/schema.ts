@@ -111,4 +111,15 @@ export default defineSchema({
     ownerId: v.optional(v.id("agents")),
     link: v.optional(v.string()),
   }).index("by_category", ["category"]),
+
+  meetingNotes: defineTable({
+    title: v.string(),
+    meetingType: v.string(),
+    summary: v.string(),
+    date: v.string(),
+    ownerId: v.optional(v.id("agents")),
+    nextSteps: v.optional(v.array(v.string())),
+  })
+    .index("by_meetingType", ["meetingType"])
+    .index("by_date", ["date"]),
 });

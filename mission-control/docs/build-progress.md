@@ -11,7 +11,7 @@
 - [x] Templates library (data + seed)
 - [x] Content calendar (data + UI)
 - [x] Knowledge base
-- [ ] Meeting notes hub
+- [x] Meeting notes hub
 
 ## Process/Automation
 - [ ] Daily standup generator (09:00 America/Chicago)

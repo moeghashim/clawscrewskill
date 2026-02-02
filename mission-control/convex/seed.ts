@@ -151,6 +151,24 @@ export const run = mutation({
       link: "https://docs.google.com/document/d/placeholder",
     });
 
+    await ctx.db.insert("meetingNotes", {
+      title: "B2B onboarding sync",
+      meetingType: "B2B",
+      summary: "Aligned on onboarding timeline for GreenCart. Need pricing sheet and launch checklist by Friday.",
+      date: "2026-02-01",
+      ownerId: hassounId,
+      nextSteps: ["Send pricing sheet", "Draft launch checklist", "Confirm onboarding call"],
+    });
+
+    await ctx.db.insert("meetingNotes", {
+      title: "Support weekly review",
+      meetingType: "Support",
+      summary: "Top issues: delivery delays, refund status. Update macros and add SLA alerts.",
+      date: "2026-02-02",
+      ownerId: aminaId,
+      nextSteps: ["Refresh macros", "Define SLA alert triggers"],
+    });
+
     return { ok: true };
   },
 });
