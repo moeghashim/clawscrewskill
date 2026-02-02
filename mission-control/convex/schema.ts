@@ -129,4 +129,13 @@ export default defineSchema({
     statusBreakdown: v.string(),
     blockers: v.array(v.string()),
   }).index("by_date", ["date"]),
+
+  alerts: defineTable({
+    type: v.string(),
+    severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+    message: v.string(),
+    createdAt: v.string(),
+  })
+    .index("by_type", ["type"])
+    .index("by_severity", ["severity"]),
 });

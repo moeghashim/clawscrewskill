@@ -176,6 +176,13 @@ export const run = mutation({
       blockers: [],
     });
 
+    await ctx.db.insert("alerts", {
+      type: "pending_approvals",
+      severity: "medium",
+      message: "1 approval pending review",
+      createdAt: "2026-02-02T10:00:00.000Z",
+    });
+
     return { ok: true };
   },
 });
