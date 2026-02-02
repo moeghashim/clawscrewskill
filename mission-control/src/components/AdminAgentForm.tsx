@@ -1,29 +1,38 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useMutation } from "convex/react";
+import { useMemo, useState, type FormEvent } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export default function AdminAgentForm() {
   const createAgent = useMutation(api.agents.create);
+  const agents = useQuery(api.agents.list) ?? [];
+  const roleOptions = useMemo(() => {
+    const roles = new Set(agents.map((agent) => agent.role).filter(Boolean));
+    return Array.from(roles).sort();
+  }, [agents]);
+
   const [agentName, setAgentName] = useState("");
   const [agentRole, setAgentRole] = useState("");
+  const [customRole, setCustomRole] = useState("");
   const [agentStatus, setAgentStatus] = useState<"idle" | "active" | "blocked">("active");
   const [created, setCreated] = useState<string | null>(null);
 
   const handleCreateAgent = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setCreated(null);
-    if (!agentName.trim() || !agentRole.trim()) {
+    const resolvedRole = agentRole === "custom" ? customRole.trim() : agentRole.trim();
+    if (!agentName.trim() || !resolvedRole) {
       return;
     }
     await createAgent({
       name: agentName.trim(),
-      role: agentRole.trim(),
+      role: resolvedRole,
       status: agentStatus,
     });
     setAgentName("");
     setAgentRole("");
+    setCustomRole("");
     setAgentStatus("active");
     setCreated("Agent created");
   };
@@ -39,12 +48,27 @@ export default function AdminAgentForm() {
           value={agentName}
           onChange={(event) => setAgentName(event.target.value)}
         />
-        <input
+        <select
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-          placeholder="Role"
           value={agentRole}
           onChange={(event) => setAgentRole(event.target.value)}
-        />
+        >
+          <option value="">Select role</option>
+          {roleOptions.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+          <option value="custom">Add new role…</option>
+        </select>
+        {agentRole === "custom" && (
+          <input
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
+            placeholder="New role name"
+            value={customRole}
+            onChange={(event) => setCustomRole(event.target.value)}
+          />
+        )}
         <select
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
           value={agentStatus}
