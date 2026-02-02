@@ -21,36 +21,43 @@ export default function AdminAgentForm() {
   const [agentStatus, setAgentStatus] = useState<"idle" | "active" | "blocked" | "inactive">("active");
   const [created, setCreated] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleCreateAgent = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setCreated(null);
+    setFormError(null);
     const resolvedRole = agentRole === "custom" ? customRole.trim() : agentRole.trim();
     const deliverables = deliverablesInput
       .split("\n")
-      .map((item) => item.trim())
+      .map((item) => item.replace(/^[-*]\s+/, "").trim())
       .filter(Boolean);
 
     if (!agentName.trim() || !agentFunction.trim() || !resolvedRole || !operatingStyle.trim()) {
+      setFormError("Please fill name, function, role, and operating style.");
       return;
     }
 
-    await createAgent({
-      name: agentName.trim(),
-      function: agentFunction.trim(),
-      role: resolvedRole,
-      operatingStyle: operatingStyle.trim(),
-      deliverables,
-      status: agentStatus,
-    });
-    setAgentName("");
-    setAgentFunction("");
-    setAgentRole("");
-    setCustomRole("");
-    setOperatingStyle("");
-    setDeliverablesInput("");
-    setAgentStatus("active");
-    setCreated("Agent created");
+    try {
+      await createAgent({
+        name: agentName.trim(),
+        function: agentFunction.trim(),
+        role: resolvedRole,
+        operatingStyle: operatingStyle.trim(),
+        deliverables,
+        status: agentStatus,
+      });
+      setAgentName("");
+      setAgentFunction("");
+      setAgentRole("");
+      setCustomRole("");
+      setOperatingStyle("");
+      setDeliverablesInput("");
+      setAgentStatus("active");
+      setCreated("Agent created");
+    } catch {
+      setFormError("Could not create agent. Please try again.");
+    }
   };
 
   const parseAgentMarkdown = (content: string) => {
@@ -177,6 +184,7 @@ export default function AdminAgentForm() {
         <button type="submit" className="w-full rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white">
           Create agent
         </button>
+        {formError && <p className="text-sm text-rose-600">{formError}</p>}
         {created && <p className="text-sm text-emerald-600">{created}</p>}
       </form>
     </div>
