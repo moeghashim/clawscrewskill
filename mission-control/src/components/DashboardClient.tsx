@@ -112,7 +112,7 @@ export default function DashboardClient() {
         </div>
       </header>
 
-      <div className="grid grid-cols-[260px_1fr_320px] gap-6 px-6 py-6">
+      <div className="grid grid-cols-[260px_1fr_320px] gap-3 px-6 py-6">
         <aside className="space-y-6 sticky top-6 self-start">
           <div className="min-h-[120px] rounded-2xl border border-zinc-200 bg-white p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Agents</h2>

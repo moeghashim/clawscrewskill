@@ -19,3 +19,4 @@
 - Added agent deactivation flow with required work summary + learning captured to audit logs.
 - Updated task assignment to create new tasks (auto-assigned) instead of selecting existing tasks.
 - Enhanced task cards with status icons, processing indicator, and clickable detail modal; moved admin actions to header.
+- Reduced dashboard column gap to tighten layout.
