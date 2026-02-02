@@ -37,3 +37,29 @@ export const create = mutation({
     return await ctx.db.insert("tasks", args);
   },
 });
+
+export const assign = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    ownerIds: v.array(v.id("agents")),
+    status: v.optional(v.string()),
+  },
+  handler: async (ctx, { taskId, ownerIds, status }) => {
+    const task = await ctx.db.get(taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    await ctx.db.patch(taskId, {
+      ownerIds,
+      status: status ?? task.status,
+    });
+
+    await ctx.db.insert("activities", {
+      type: "task_assigned",
+      message: `Task ${task.title} assigned`,
+    });
+
+    return { ok: true };
+  },
+});

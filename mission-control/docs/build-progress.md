@@ -12,6 +12,7 @@
 - [x] Content calendar (data + UI)
 - [x] Knowledge base
 - [x] Meeting notes hub
+- [x] Admin controls (add agents, assign tasks)
 
 ## Process/Automation
 - [x] Daily standup generator (09:00 America/Chicago)

@@ -10,3 +10,4 @@
 - Added policy enforcement mutations that route approvals for sensitive actions and log activity updates.
 - Added audit log table + mutation to capture rationale, impact, and measurement plan for major actions.
 - Added dashboard panels for standups, alerts, and audit trail visibility.
+- Added admin controls to create agents and assign tasks from the dashboard.
