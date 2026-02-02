@@ -201,6 +201,17 @@ export const run = mutation({
       requiresApproval: false,
     });
 
+    await ctx.db.insert("auditLogs", {
+      action: "create",
+      entityType: "template",
+      entityId: "seed-template-1",
+      actorId: hassounId,
+      rationale: "Initialize template library",
+      expectedImpact: "Faster response times",
+      measurementPlan: "Track first response time weekly",
+      timestamp: "2026-02-02T11:00:00.000Z",
+    });
+
     return { ok: true };
   },
 });

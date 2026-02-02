@@ -8,3 +8,4 @@
 - Implemented standup generation that summarizes tasks, blockers, approvals, support, and pipeline counts.
 - Added alerts engine to detect blocked tasks, KPI regression, support backlog, and pending approvals.
 - Added policy enforcement mutations that route approvals for sensitive actions and log activity updates.
+- Added audit log table + mutation to capture rationale, impact, and measurement plan for major actions.

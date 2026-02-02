@@ -17,4 +17,4 @@
 - [x] Daily standup generator (09:00 America/Chicago)
 - [x] Alerts engine (blockers/SLA/KPI regression)
 - [x] Autonomy + approvals enforcement
-- [ ] Documentation/audit trail automation
+- [x] Documentation/audit trail automation

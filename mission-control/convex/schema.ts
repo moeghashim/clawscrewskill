@@ -144,4 +144,17 @@ export default defineSchema({
     description: v.string(),
     requiresApproval: v.boolean(),
   }).index("by_key", ["key"]),
+
+  auditLogs: defineTable({
+    action: v.string(),
+    entityType: v.string(),
+    entityId: v.optional(v.string()),
+    actorId: v.optional(v.id("agents")),
+    rationale: v.string(),
+    expectedImpact: v.optional(v.string()),
+    measurementPlan: v.optional(v.string()),
+    timestamp: v.string(),
+  })
+    .index("by_entityType", ["entityType"])
+    .index("by_timestamp", ["timestamp"]),
 });
