@@ -34,6 +34,9 @@ export default function DashboardClient() {
   const calendarItems = useQuery(api.contentCalendar.listAll) ?? [];
   const knowledgeItems = useQuery(api.knowledgeBase.listAll) ?? [];
   const meetingNotes = useQuery(api.meetingNotes.listAll) ?? [];
+  const standups = useQuery(api.standup.listLatest, { limit: 3 }) ?? [];
+  const alerts = useQuery(api.alerts.listLatest, { limit: 5 }) ?? [];
+  const auditLogs = useQuery(api.audit.listLatest, { limit: 5 }) ?? [];
 
   const tasksByStatus = useMemo(() => {
     return STATUS_ORDER.reduce<Record<string, typeof tasks>>((acc, status) => {
@@ -224,6 +227,81 @@ export default function DashboardClient() {
                         ))}
                       </ul>
                     )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Standups</h2>
+              <span className="text-xs text-zinc-400">{standups.length} entries</span>
+            </div>
+            <div className="mt-4 space-y-3">
+              {standups.length === 0 ? (
+                <p className="text-sm text-zinc-500">No standups yet.</p>
+              ) : (
+                standups.map((entry) => (
+                  <div key={entry._id} className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{entry.date}</p>
+                      <span className="text-xs text-zinc-500">{entry.blockers.length} blockers</span>
+                    </div>
+                    <p className="mt-2 text-xs text-zinc-500">{entry.summary}</p>
+                    <p className="mt-2 text-xs text-zinc-400">{entry.statusBreakdown}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Alerts</h2>
+              <span className="text-xs text-zinc-400">{alerts.length} active</span>
+            </div>
+            <div className="mt-4 space-y-3">
+              {alerts.length === 0 ? (
+                <p className="text-sm text-zinc-500">No alerts triggered.</p>
+              ) : (
+                alerts.map((alert) => (
+                  <div key={alert._id} className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{alert.type.replace(/_/g, " ")}</p>
+                      <span className="text-xs text-zinc-500">{alert.severity}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-zinc-500">{alert.message}</p>
+                    <p className="mt-2 text-xs text-zinc-400">{alert.createdAt}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Audit Trail</h2>
+              <span className="text-xs text-zinc-400">{auditLogs.length} entries</span>
+            </div>
+            <div className="mt-4 space-y-3">
+              {auditLogs.length === 0 ? (
+                <p className="text-sm text-zinc-500">No audit logs yet.</p>
+              ) : (
+                auditLogs.map((entry) => (
+                  <div key={entry._id} className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{entry.action}</p>
+                      <span className="text-xs text-zinc-500">{entry.entityType}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-zinc-500">{entry.rationale}</p>
+                    {entry.expectedImpact && (
+                      <p className="mt-2 text-xs text-zinc-400">Impact: {entry.expectedImpact}</p>
+                    )}
+                    {entry.measurementPlan && (
+                      <p className="mt-1 text-xs text-zinc-400">Measure: {entry.measurementPlan}</p>
+                    )}
+                    <p className="mt-2 text-xs text-zinc-400">{entry.timestamp}</p>
                   </div>
                 ))
               )}
