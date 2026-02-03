@@ -1,5 +1,4 @@
 # Learning Log
 
-- Added an explicit TOOLING.md contract to make skills executable with MCP/API access checks.
-- Updated SEO skill flow to verify tooling first, then execute recipes with graceful fallbacks.
-- Added Shopify execution guidance (theme repo PR preferred, Admin API fallback) for sprint workflows.
+- Implemented scripted sync to mirror openclaw-skill-seo into babanuj-squad as a normal folder.
+- Added a sync script with safety checks (clean repos, main branch) and rsync in/out modes.
