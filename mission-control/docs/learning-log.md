@@ -22,3 +22,5 @@
 - Reduced dashboard column gap to tighten layout.
 - Redesigned task board columns to reduce wasted space and match compact cards layout.
 - Split task processing indicator onto its own line above the title.
+- Added test seed/cleanup helpers for UI verification.
+- Published SEO skill repo with packaged seo.skill and recipe references.
