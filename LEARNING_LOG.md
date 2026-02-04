@@ -5,3 +5,4 @@
 - Ran a dry-run sync; no changes listed, so the SEO skill is already in sync.
 - Added Ahrefs MCP server run/config details to blyzr-squad/PROJECT_TOOLING.md.
 - Switched Ahrefs tooling notes to prefer remote MCP (MCP key) with local MCP as fallback.
+- Added mcporter server entry for Ahrefs remote MCP endpoint.
