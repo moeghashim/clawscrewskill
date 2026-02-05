@@ -8,3 +8,7 @@ Keep this file as the canonical learning reference for the repo. Project-level m
 - Color palette: Paper #F7F7F5, Forest Green #1A3C2B, accents Coral #FF8C69, Mint #9EFFBF, Gold #F4D35E.
 - Spacing baseline 32px; border radius 0–2px; micro-interactions 0.1s linear.
 - Images use mix-blend-luminosity at 90% opacity; hover returns full color.
+- Auth provider: Better Auth (for the UI).
+- Backend: Convex (project + keys provided by Moe).
+- UI scope v1: full dashboard + tasks + task detail + docs + agents.
+- Deployment target: Vercel.

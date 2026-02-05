@@ -10,6 +10,11 @@ Create and evolve the **ClawsCrew** project with a Technical Minimalist design s
 - Micro-interactions should feel **snappy** (0.1s), linear ease-out.
 - Images use luminosity blend with a hover reveal to full color.
 - Layout favors **generous negative space** and a 32px padding baseline.
+- Auth provider: Better Auth for the UI.
+- Backend: Convex (keys provided by Moe).
+- UI scope: full dashboard + tasks + task detail + docs + agents.
+- Deployment target: Vercel.
+- End goal: this becomes an OpenClaw skill.
 
 ## Key Artifacts
 - `design system.md` in repo root contains the full spec + components.
