@@ -1,7 +1,15 @@
+"use client";
+
 import SideNav from "@/components/SideNav";
 import SectionTitle from "@/components/SectionTitle";
+import { useQuery } from "convex/react";
+import { api } from "@/lib/convex";
 
 export default function Home() {
+  const tasks = useQuery(api.tasks.list) || [];
+  const agents = useQuery(api.agents.list) || [];
+  const feed = useQuery(api.feed.list, { limit: 10 }) || [];
+
   return (
     <main className="min-h-screen p-10">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
@@ -17,17 +25,24 @@ export default function Home() {
             </div>
             <div className="border border-[#3A3A38]/20 p-6 bg-white">
               <div className="text-[10px] uppercase tracking-[0.2em] opacity-60">Tasks</div>
-              <div className="mt-4 text-3xl uppercase tracking-tight">0 Active</div>
+              <div className="mt-4 text-3xl uppercase tracking-tight">{tasks.length} Active</div>
             </div>
             <div className="border border-[#3A3A38]/20 p-6 bg-white">
               <div className="text-[10px] uppercase tracking-[0.2em] opacity-60">Agents</div>
-              <div className="mt-4 text-3xl uppercase tracking-tight">0 Online</div>
+              <div className="mt-4 text-3xl uppercase tracking-tight">{agents.length} Online</div>
             </div>
           </section>
 
           <section className="mt-10 border border-[#3A3A38]/20 bg-white p-6">
             <h2 className="text-[12px] uppercase tracking-[0.2em]">Activity Feed</h2>
-            <div className="mt-4 text-sm opacity-60">No activity yet.</div>
+            <div className="mt-4 space-y-2">
+              {feed.length === 0 && <div className="text-sm opacity-60">No activity yet.</div>}
+              {feed.map((item) => (
+                <div key={item._id} className="text-sm">
+                  {item.message}
+                </div>
+              ))}
+            </div>
           </section>
         </div>
       </div>
