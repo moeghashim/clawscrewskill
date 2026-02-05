@@ -1,0 +1,9 @@
+{
+  "name": "mission_control",
+  "type": "command",
+  "command": "skill/bin/mission-control",
+  "env": {
+    "MISSION_CONTROL_CONVEX_URL": "$MISSION_CONTROL_CONVEX_URL",
+    "MISSION_CONTROL_CONVEX_DEPLOY_KEY": "$MISSION_CONTROL_CONVEX_DEPLOY_KEY"
+  }
+}

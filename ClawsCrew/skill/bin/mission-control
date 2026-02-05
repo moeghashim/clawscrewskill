@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[mission-control] stub — wire me up" >&2
+
+cat <<'EOF'
+Usage:
+  mission-control <command>
+
+Commands:
+  help        Show this help
+
+Notes:
+  - Replace this stub with the real mission-control CLI.
+EOF
