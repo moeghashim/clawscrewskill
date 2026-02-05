@@ -63,6 +63,8 @@ const actions = {
   "notifications.undelivered": () => client.query(api.notifications.undelivered, payload),
   "notifications.markDelivered": () => client.mutation(api.notifications.markDelivered, payload),
   "feed.list": () => client.query(api.feed.list, payload),
+  "seed.run": () => client.mutation(api.seed.seedData, payload),
+  "seed.clear": () => client.mutation(api.seed.clearSeed, payload),
 };
 
 if (!actions[input.action]) {

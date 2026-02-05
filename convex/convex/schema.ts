@@ -8,6 +8,7 @@ export default defineSchema({
     status: v.union(v.literal("idle"), v.literal("active"), v.literal("blocked")),
     currentTaskId: v.optional(v.id("tasks")),
     sessionKey: v.string(),
+    seed: v.optional(v.boolean()),
   }).index("by_sessionKey", ["sessionKey"]),
 
   tasks: defineTable({
@@ -22,6 +23,7 @@ export default defineSchema({
       v.literal("blocked")
     ),
     assigneeIds: v.array(v.id("agents")),
+    seed: v.optional(v.boolean()),
   }).index("by_status", ["status"]),
 
   messages: defineTable({
@@ -29,6 +31,7 @@ export default defineSchema({
     fromAgentId: v.id("agents"),
     content: v.string(),
     attachments: v.array(v.id("documents")),
+    seed: v.optional(v.boolean()),
   }).index("by_task", ["taskId"]),
 
   documents: defineTable({
@@ -41,17 +44,20 @@ export default defineSchema({
       v.literal("other")
     ),
     taskId: v.optional(v.id("tasks")),
+    seed: v.optional(v.boolean()),
   }),
 
   activities: defineTable({
     type: v.string(),
     agentId: v.optional(v.id("agents")),
     message: v.string(),
+    seed: v.optional(v.boolean()),
   }),
 
   notifications: defineTable({
     mentionedAgentId: v.id("agents"),
     content: v.string(),
     delivered: v.boolean(),
+    seed: v.optional(v.boolean()),
   }).index("by_agent_delivered", ["mentionedAgentId", "delivered"]),
 });
