@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
+import { useSystemAgent } from "@/lib/systemAgent";
 
 export default function TaskDetail() {
   const params = useParams();
@@ -14,12 +15,13 @@ export default function TaskDetail() {
   const messages = useQuery(api.messages.byTask, { taskId: id as any }) || [];
   const createMessage = useMutation(api.messages.create);
   const [content, setContent] = useState("");
+  const { ensureSystem } = useSystemAgent();
 
   const onSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content || !task) return;
-    // For now, use a placeholder agentId (first agent or skip). Requires valid agentId.
-    // TODO: wire authenticated agent in UI
+    const agentId = await ensureSystem();
+    await createMessage({ taskId: task._id, fromAgentId: agentId, content, attachments: [] });
     setContent("");
   };
 
