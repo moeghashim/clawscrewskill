@@ -1,14 +1,8 @@
-# Learning — Root Reference
-
-Keep this file as the canonical learning reference for the repo. Project-level memories should link here.
+# Learning
 
 ## ClawsCrew
-- Design system is Technical Minimalist (flat 2D, no shadows, hairline borders at 20% opacity).
-- Typography stack: Space Grotesk (headings), General Sans (body), JetBrains Mono (labels).
-- Color palette: Paper #F7F7F5, Forest Green #1A3C2B, accents Coral #FF8C69, Mint #9EFFBF, Gold #F4D35E.
-- Spacing baseline 32px; border radius 0–2px; micro-interactions 0.1s linear.
-- Images use mix-blend-luminosity at 90% opacity; hover returns full color.
-- Auth provider: Better Auth (for the UI).
-- Backend: Convex (project + keys provided by Moe).
-- UI scope v1: full dashboard + tasks + task detail + docs + agents.
-- Deployment target: Vercel.
+- Repo root contains `/ui`, `/convex`, `/skill` only.
+- Auth is single-user via `ADMIN_EMAIL` + `ADMIN_PASSWORD` (no email flows).
+- Convex is the backend; CLI uses `MISSION_CONTROL_CONVEX_URL` + deploy key.
+- UI uses Technical Minimalist styling (Paper #F7F7F5, Forest Green #1A3C2B, hairline borders).
+- Convex + skill packages are set to ESM (`"type": "module"`) to support generated API imports.
