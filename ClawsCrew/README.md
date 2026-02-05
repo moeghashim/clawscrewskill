@@ -1,0 +1,3 @@
+# ClawsCrew
+
+Project initialized.
