@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const create = mutation({
@@ -20,5 +20,12 @@ export const create = mutation({
       type: args.type,
       taskId: args.taskId,
     });
+  },
+});
+
+export const list = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("documents").order("desc").collect();
   },
 });

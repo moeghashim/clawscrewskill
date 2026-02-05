@@ -41,6 +41,20 @@ export const update = mutation({
   },
 });
 
+export const list = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("tasks").order("desc").collect();
+  },
+});
+
+export const get = query({
+  args: { id: v.id("tasks") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
 export const byAssignee = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
