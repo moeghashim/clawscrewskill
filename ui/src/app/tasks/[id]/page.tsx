@@ -32,17 +32,17 @@ export default function TaskDetail() {
 
         <div>
           <SectionTitle title="Task Detail" subtitle="Task" />
-          <div className="border border-[#3A3A38]/20 bg-white p-6">
-            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60">Title</div>
+          <div className="border border-[var(--grid)] bg-white p-6">
+            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 mono">Title</div>
             <div className="mt-2 text-xl uppercase tracking-tight">
               {task?.title || "Untitled Task"}
             </div>
-            <div className="mt-6 text-[10px] uppercase tracking-[0.2em] opacity-60">Description</div>
+            <div className="mt-6 text-[10px] uppercase tracking-[0.2em] opacity-60 mono">Description</div>
             <div className="mt-2 text-sm opacity-70">{task?.description || "No description"}</div>
           </div>
 
-          <div className="mt-6 border border-[#3A3A38]/20 bg-white p-6">
-            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60">Comments</div>
+          <div className="mt-6 border border-[var(--grid)] bg-white p-6">
+            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 mono">Comments</div>
             <div className="mt-4 space-y-2">
               {messages.length === 0 && <div className="text-sm opacity-60">No messages</div>}
               {messages.map((m) => (
@@ -53,12 +53,12 @@ export default function TaskDetail() {
             </div>
             <form onSubmit={onSend} className="mt-4 flex gap-2">
               <input
-                className="flex-1 border border-[#3A3A38]/20 px-4 py-2 text-sm"
+                className="flex-1 border border-[var(--grid)] px-4 py-2 text-sm"
                 placeholder="Write a comment"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
               />
-              <button className="bg-[#1A3C2B] text-white px-4 py-2 text-[12px] uppercase tracking-[0.2em]">
+              <button className="bg-[var(--forest)] text-white px-4 py-2 text-[12px] uppercase tracking-[0.2em] mono">
                 Send
               </button>
             </form>

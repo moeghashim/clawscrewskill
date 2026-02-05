@@ -28,32 +28,32 @@ export default function DocumentsPage() {
         <div>
           <SectionTitle title="Documents" subtitle="Knowledge" />
 
-          <form onSubmit={onCreate} className="border border-[#3A3A38]/20 bg-white p-6 mb-8">
+          <form onSubmit={onCreate} className="border border-[var(--grid)] bg-white p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
-                className="border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                className="border border-[var(--grid)] px-4 py-3 text-sm"
                 placeholder="Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
               <input
-                className="border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                className="border border-[var(--grid)] px-4 py-3 text-sm"
                 placeholder="Content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
               />
             </div>
-            <button className="mt-4 bg-[#1A3C2B] text-white px-6 py-3 text-[12px] uppercase tracking-[0.2em]">
+            <button className="mt-4 bg-[var(--forest)] text-white px-6 py-3 text-[12px] uppercase tracking-[0.2em] mono">
               Create Document
             </button>
           </form>
 
-          <div className="border border-[#3A3A38]/20 bg-white p-6">
-            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60">Library</div>
+          <div className="border border-[var(--grid)] bg-white p-6">
+            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 mono">Library</div>
             <div className="mt-4 space-y-2">
               {documents.length === 0 && <div className="text-sm opacity-60">No documents</div>}
               {documents.map((d) => (
-                <div key={d._id} className="border border-[#3A3A38]/20 p-3 text-sm">
+                <div key={d._id} className="border border-[var(--grid)] p-3 text-sm">
                   <div className="uppercase tracking-tight">{d.title}</div>
                   <div className="text-xs opacity-60 mt-1">{d.content}</div>
                 </div>
