@@ -7,7 +7,7 @@ import { api } from "@/lib/convex";
 import EmptyState from "@/components/EmptyState";
 
 export default function AgentsPage() {
-  const agents = useQuery(api.agents.list) || [];
+  const agents = (useQuery(api.agents.list) || []) as any[];
 
   return (
     <main className="min-h-screen p-10">

@@ -11,8 +11,8 @@ import { useSystemAgent } from "@/lib/systemAgent";
 export default function TaskDetail() {
   const params = useParams();
   const id = params?.id as string;
-  const task = useQuery(api.tasks.get, { id: id as any });
-  const messages = useQuery(api.messages.byTask, { taskId: id as any }) || [];
+  const task = useQuery(api.tasks.get, { id: id as any }) as any;
+  const messages = (useQuery(api.messages.byTask, { taskId: id as any }) || []) as any[];
   const createMessage = useMutation(api.messages.create);
   const [content, setContent] = useState("");
   const { ensureSystem } = useSystemAgent();

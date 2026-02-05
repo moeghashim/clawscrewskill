@@ -6,9 +6,9 @@ import { useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 
 export default function Home() {
-  const tasks = useQuery(api.tasks.list) || [];
-  const agents = useQuery(api.agents.list) || [];
-  const feed = useQuery(api.feed.list, { limit: 10 }) || [];
+  const tasks = (useQuery(api.tasks.list) || []) as any[];
+  const agents = (useQuery(api.agents.list) || []) as any[];
+  const feed = (useQuery(api.feed.list, { limit: 10 }) || []) as any[];
 
   return (
     <main className="min-h-screen p-10">

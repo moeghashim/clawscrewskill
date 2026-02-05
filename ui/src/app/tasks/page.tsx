@@ -18,7 +18,7 @@ const columns = [
 ];
 
 export default function TasksPage() {
-  const tasks = useQuery(api.tasks.list) || [];
+  const tasks = (useQuery(api.tasks.list) || []) as any[];
   const createTask = useMutation(api.tasks.create);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

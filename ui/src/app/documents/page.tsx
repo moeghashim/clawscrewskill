@@ -8,7 +8,7 @@ import { useState } from "react";
 import EmptyState from "@/components/EmptyState";
 
 export default function DocumentsPage() {
-  const documents = useQuery(api.documents.list) || [];
+  const documents = (useQuery(api.documents.list) || []) as any[];
   const createDoc = useMutation(api.documents.create);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
