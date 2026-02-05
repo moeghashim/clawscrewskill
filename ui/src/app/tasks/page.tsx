@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
 import Link from "next/link";
+import EmptyState from "@/components/EmptyState";
 
 const columns = [
   "inbox",
@@ -70,7 +71,7 @@ export default function TasksPage() {
                     </Link>
                   ))}
                   {tasks.filter((t) => t.status === col).length === 0 && (
-                    <div className="text-sm opacity-60">No tasks</div>
+                    <EmptyState label="No tasks" />
                   )}
                 </div>
               </div>

@@ -5,6 +5,7 @@ import SectionTitle from "@/components/SectionTitle";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
+import EmptyState from "@/components/EmptyState";
 
 export default function DocumentsPage() {
   const documents = useQuery(api.documents.list) || [];
@@ -51,7 +52,7 @@ export default function DocumentsPage() {
           <div className="border border-[var(--grid)] bg-white p-6">
             <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 mono">Library</div>
             <div className="mt-4 space-y-2">
-              {documents.length === 0 && <div className="text-sm opacity-60">No documents</div>}
+              {documents.length === 0 && <EmptyState label="No documents" />}
               {documents.map((d) => (
                 <div key={d._id} className="border border-[var(--grid)] p-3 text-sm">
                   <div className="uppercase tracking-tight">{d.title}</div>
