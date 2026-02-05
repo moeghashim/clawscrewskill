@@ -40,7 +40,7 @@ if (!convexUrl) {
 
 const client = new ConvexHttpClient(convexUrl);
 if (deployKey) {
-  client.setAuth(async () => deployKey);
+  client.setAdminAuth(deployKey);
 }
 
 const payload = input.payload || {};
