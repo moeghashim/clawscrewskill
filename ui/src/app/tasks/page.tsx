@@ -20,8 +20,17 @@ const columns = [
 export default function TasksPage() {
   const tasks = (useQuery(api.tasks.list) || []) as any[];
   const createTask = useMutation(api.tasks.create);
+  const toggleEnabled = useMutation(api.tasks.toggleEnabled);
+  const setSchedule = useMutation(api.tasks.setSchedule);
+  const clearSchedule = useMutation(api.tasks.clearSchedule);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+
+  const [scheduleTaskId, setScheduleTaskId] = useState<string | null>(null);
+  const [scheduleType, setScheduleType] = useState<"once" | "cron">("once");
+  const [runAt, setRunAt] = useState("");
+  const [cron, setCron] = useState("");
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +38,52 @@ export default function TasksPage() {
     await createTask({ title, description });
     setTitle("");
     setDescription("");
+  };
+
+  const openSchedule = (task: any) => {
+    setScheduleTaskId(task._id);
+    const existing = task.schedule;
+    if (existing?.type === "cron") {
+      setScheduleType("cron");
+      setCron(existing.cron || "");
+      setRunAt("");
+    } else {
+      setScheduleType("once");
+      setRunAt(existing?.runAt ? new Date(existing.runAt).toISOString().slice(0, 16) : "");
+      setCron("");
+    }
+  };
+
+  const submitSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scheduleTaskId) return;
+
+    if (scheduleType === "once") {
+      if (!runAt) return;
+      const ts = new Date(runAt).getTime();
+      await setSchedule({
+        id: scheduleTaskId as any,
+        schedule: { type: "once", runAt: ts },
+      });
+    } else {
+      if (!cron) return;
+      await setSchedule({
+        id: scheduleTaskId as any,
+        schedule: { type: "cron", cron },
+      });
+    }
+
+    setScheduleTaskId(null);
+    setRunAt("");
+    setCron("");
+  };
+
+  const onToggle = async (task: any, enabled: boolean) => {
+    await toggleEnabled({ id: task._id, enabled });
+  };
+
+  const onClearSchedule = async (task: any) => {
+    await clearSchedule({ id: task._id });
   };
 
   return (
@@ -65,10 +120,42 @@ export default function TasksPage() {
                 <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 mono">{col}</div>
                 <div className="mt-4 space-y-3">
                   {tasks.filter((t) => t.status === col).map((t) => (
-                    <Link key={t._id} href={`/tasks/${t._id}`} className="block border border-[var(--grid)] bg-white p-3 text-sm">
-                      <div className="uppercase tracking-tight">{t.title}</div>
-                      <div className="text-xs opacity-60 mt-1">{t.description}</div>
-                    </Link>
+                    <div key={t._id} className="border border-[var(--grid)] bg-white p-3 text-sm">
+                      <Link href={`/tasks/${t._id}`} className="block">
+                        <div className="uppercase tracking-tight">{t.title}</div>
+                        <div className="text-xs opacity-60 mt-1">{t.description}</div>
+                      </Link>
+
+                      {col === "inbox" && (
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          <button
+                            onClick={() => onToggle(t, !t.enabled)}
+                            className={`text-[10px] uppercase tracking-[0.2em] mono px-3 py-1 border ${
+                              t.enabled ? "border-[var(--forest)]" : "border-[var(--grid)] opacity-60"
+                            }`}
+                          >
+                            {t.enabled ? "On" : "Off"}
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={!t.enabled}
+                              onClick={() => openSchedule(t)}
+                              className="text-[10px] uppercase tracking-[0.2em] mono px-3 py-1 border border-[var(--grid)] disabled:opacity-40"
+                            >
+                              Schedule
+                            </button>
+                            {t.schedule && (
+                              <button
+                                onClick={() => onClearSchedule(t)}
+                                className="text-[10px] uppercase tracking-[0.2em] mono px-3 py-1 border border-[var(--grid)]"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   ))}
                   {tasks.filter((t) => t.status === col).length === 0 && (
                     <EmptyState label="No tasks" />
@@ -79,6 +166,67 @@ export default function TasksPage() {
           </div>
         </div>
       </div>
+
+      {scheduleTaskId && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-6">
+          <div className="bg-white border border-[var(--grid)] w-full max-w-lg p-6">
+            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 mono">
+              Schedule Task
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setScheduleType("once")}
+                className={`px-3 py-1 text-[10px] uppercase tracking-[0.2em] mono border ${
+                  scheduleType === "once" ? "border-[var(--forest)]" : "border-[var(--grid)]"
+                }`}
+              >
+                One-time
+              </button>
+              <button
+                onClick={() => setScheduleType("cron")}
+                className={`px-3 py-1 text-[10px] uppercase tracking-[0.2em] mono border ${
+                  scheduleType === "cron" ? "border-[var(--forest)]" : "border-[var(--grid)]"
+                }`}
+              >
+                Cron
+              </button>
+            </div>
+
+            <form onSubmit={submitSchedule} className="mt-4 space-y-3">
+              {scheduleType === "once" ? (
+                <input
+                  type="datetime-local"
+                  className="w-full border border-[var(--grid)] px-4 py-3 text-sm"
+                  value={runAt}
+                  onChange={(e) => setRunAt(e.target.value)}
+                />
+              ) : (
+                <input
+                  className="w-full border border-[var(--grid)] px-4 py-3 text-sm"
+                  placeholder="Cron expression (e.g. 0 9 * * 1)"
+                  value={cron}
+                  onChange={(e) => setCron(e.target.value)}
+                />
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="bg-[var(--forest)] text-white px-4 py-2 text-[12px] uppercase tracking-[0.2em] mono"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScheduleTaskId(null)}
+                  className="border border-[var(--grid)] px-4 py-2 text-[12px] uppercase tracking-[0.2em] mono"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
