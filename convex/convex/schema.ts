@@ -29,6 +29,7 @@ export default defineSchema({
         type: v.union(v.literal("once"), v.literal("cron")),
         runAt: v.optional(v.number()),
         cron: v.optional(v.string()),
+        timezone: v.optional(v.string()),
         jobId: v.optional(v.string()),
       })
     ),

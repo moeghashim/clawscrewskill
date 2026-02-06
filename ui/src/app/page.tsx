@@ -28,6 +28,7 @@ export default function Home() {
   const [scheduleType, setScheduleType] = useState<"once" | "cron">("once");
   const [runAt, setRunAt] = useState("");
   const [cron, setCron] = useState("");
+  const [cronError, setCronError] = useState<string | null>(null);
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,25 +56,36 @@ export default function Home() {
   const submitSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!scheduleTaskId) return;
+    setCronError(null);
 
-    if (scheduleType === "once") {
-      if (!runAt) return;
-      const ts = new Date(runAt).getTime();
-      await setSchedule({
-        id: scheduleTaskId as any,
-        schedule: { type: "once", runAt: ts },
-      });
-    } else {
-      if (!cron) return;
-      await setSchedule({
-        id: scheduleTaskId as any,
-        schedule: { type: "cron", cron },
-      });
+    try {
+      if (scheduleType === "once") {
+        if (!runAt) return;
+        const ts = new Date(runAt).getTime();
+        await setSchedule({
+          id: scheduleTaskId as any,
+          schedule: { type: "once", runAt: ts },
+        });
+      } else {
+        if (!cron) return;
+        const parts = cron.trim().split(/\s+/);
+        if (parts.length < 5) {
+          setCronError("Cron must have 5 fields");
+          return;
+        }
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        await setSchedule({
+          id: scheduleTaskId as any,
+          schedule: { type: "cron", cron, timezone },
+        });
+      }
+
+      setScheduleTaskId(null);
+      setRunAt("");
+      setCron("");
+    } catch (err: any) {
+      setCronError(err?.message || "Schedule failed");
     }
-
-    setScheduleTaskId(null);
-    setRunAt("");
-    setCron("");
   };
 
   const onToggle = async (task: any, enabled: boolean) => {
@@ -238,7 +250,7 @@ export default function Home() {
                             {t.schedule.type === "once" && t.schedule.runAt
                               ? `Scheduled ${new Date(t.schedule.runAt).toLocaleString()}`
                               : t.schedule.type === "cron"
-                                ? `Cron ${t.schedule.cron}`
+                                ? `Cron ${t.schedule.cron} ${t.schedule.timezone ? `(${t.schedule.timezone})` : ""}`
                                 : "Scheduled"}
                           </div>
                         )}
@@ -369,12 +381,19 @@ export default function Home() {
                   onChange={(e) => setRunAt(e.target.value)}
                 />
               ) : (
-                <input
-                  className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
-                  placeholder="Cron expression (e.g. 0 9 * * 1)"
-                  value={cron}
-                  onChange={(e) => setCron(e.target.value)}
-                />
+                <div className="space-y-2">
+                  <input
+                    className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                    placeholder="Cron expression (e.g. 0 9 * * 1)"
+                    value={cron}
+                    onChange={(e) => setCron(e.target.value)}
+                  />
+                  {cronError && (
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--coral)] font-mono">
+                      {cronError}
+                    </div>
+                  )}
+                </div>
               )}
               <div className="flex gap-2">
                 <button
