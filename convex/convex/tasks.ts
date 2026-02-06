@@ -1,5 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import cronParser from "cron-parser";
 
 export const create = mutation({
   args: {
@@ -52,6 +54,10 @@ export const toggleEnabled = mutation({
     const task = await ctx.db.get(args.id);
     if (!task) return false;
 
+    if (!args.enabled && task.schedule?.jobId) {
+      await ctx.scheduler.cancel(task.schedule.jobId);
+    }
+
     const schedule = args.enabled ? task.schedule : undefined;
 
     await ctx.db.patch(args.id, {
@@ -87,7 +93,41 @@ export const setSchedule = mutation({
     if (!task.enabled) {
       throw new Error("Task must be enabled to schedule");
     }
-    await ctx.db.patch(args.id, { schedule: args.schedule });
+
+    if (task.schedule?.jobId) {
+      await ctx.scheduler.cancel(task.schedule.jobId);
+    }
+
+    let jobId: string | undefined;
+
+    if (args.schedule.type === "once") {
+      if (!args.schedule.runAt) {
+        throw new Error("runAt is required for one-time schedules");
+      }
+      jobId = await ctx.scheduler.runAt(
+        new Date(args.schedule.runAt),
+        internal.schedules.runTaskSchedule,
+        { taskId: task._id }
+      );
+    } else {
+      if (!args.schedule.cron) {
+        throw new Error("cron is required for cron schedules");
+      }
+      const interval = cronParser.parseExpression(args.schedule.cron, {
+        currentDate: new Date(),
+      });
+      const next = interval.next().toDate();
+      jobId = await ctx.scheduler.runAt(next, internal.schedules.runTaskSchedule, {
+        taskId: task._id,
+      });
+    }
+
+    await ctx.db.patch(args.id, {
+      schedule: {
+        ...args.schedule,
+        jobId,
+      },
+    });
 
     const scheduleText =
       args.schedule.type === "once"
@@ -108,6 +148,11 @@ export const clearSchedule = mutation({
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.id);
     if (!task) return false;
+
+    if (task.schedule?.jobId) {
+      await ctx.scheduler.cancel(task.schedule.jobId);
+    }
+
     await ctx.db.patch(args.id, { schedule: undefined });
 
     await ctx.db.insert("activities", {
