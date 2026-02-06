@@ -22,6 +22,7 @@ export default function TasksPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [newMissionOpen, setNewMissionOpen] = useState(false);
 
   const [scheduleTaskId, setScheduleTaskId] = useState<string | null>(null);
   const [scheduleType, setScheduleType] = useState<"once" | "cron">("once");
@@ -34,6 +35,7 @@ export default function TasksPage() {
     await createTask({ title, description });
     setTitle("");
     setDescription("");
+    setNewMissionOpen(false);
   };
 
   const openSchedule = (task: any) => {
@@ -133,7 +135,10 @@ export default function TasksPage() {
           <button className="font-mono text-[9px] px-3 py-1.5 border border-[var(--grid)] hover:border-[#3A3A38]/50 uppercase tracking-wider">
             System: Nominal
           </button>
-          <button className="bg-[var(--forest)] text-white font-mono text-[9px] px-4 py-1.5 uppercase tracking-wider hover:opacity-90">
+          <button
+            onClick={() => setNewMissionOpen(true)}
+            className="bg-[var(--forest)] text-white font-mono text-[9px] px-4 py-1.5 uppercase tracking-wider hover:opacity-90"
+          >
             New Mission
           </button>
         </div>
@@ -289,6 +294,45 @@ export default function TasksPage() {
           <span className="font-mono text-[8px] text-white uppercase tracking-widest">14:21:44 PST</span>
         </div>
       </footer>
+
+      {newMissionOpen && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-6 z-50">
+          <div className="bg-white border border-[var(--grid)] w-full max-w-lg p-6">
+            <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-mono">
+              New Mission
+            </div>
+            <form onSubmit={onCreate} className="mt-4 space-y-3">
+              <input
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                placeholder="Task title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <input
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="bg-[var(--forest)] text-white px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-mono"
+                >
+                  Create
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewMissionOpen(false)}
+                  className="border border-[#3A3A38]/20 px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-mono"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {scheduleTaskId && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-6 z-50">
