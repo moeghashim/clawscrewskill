@@ -199,10 +199,10 @@ export default function Home() {
                       <span className="font-mono text-[9px] text-[#3A3A38]/40">{t._id.slice(0, 8)}</span>
                       <span className="priority-badge font-mono bg-[#9EFFBF] text-[var(--forest)] uppercase">Normal</span>
                     </div>
-                    <Link href={`/tasks/${t._id}`} className="block">
+                    <div className="block">
                       <h3 className="font-header font-bold text-xs leading-tight mb-1">{t.title}</h3>
                       <p className="text-[10px] text-[#3A3A38]/60 mb-3">{t.description}</p>
-                    </Link>
+                    </div>
 
                     {col.key === "inbox" && (
                       <div className="mt-2 space-y-2">
