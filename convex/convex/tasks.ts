@@ -13,6 +13,8 @@ export const create = mutation({
       description: args.description,
       status: "inbox",
       assigneeIds: args.assigneeIds ?? [],
+      enabled: true,
+      schedule: undefined,
     });
   },
 });
@@ -37,6 +39,60 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { id, ...patch } = args;
     await ctx.db.patch(id, patch);
+    return true;
+  },
+});
+
+export const toggleEnabled = mutation({
+  args: {
+    id: v.id("tasks"),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.id);
+    if (!task) return false;
+
+    const schedule = args.enabled ? task.schedule : undefined;
+
+    await ctx.db.patch(args.id, {
+      enabled: args.enabled,
+      schedule,
+    });
+
+    return true;
+  },
+});
+
+export const setSchedule = mutation({
+  args: {
+    id: v.id("tasks"),
+    schedule: v.object({
+      type: v.union(v.literal("once"), v.literal("cron")),
+      runAt: v.optional(v.number()),
+      cron: v.optional(v.string()),
+      jobId: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.id);
+    if (!task) return false;
+    if (task.status !== "inbox") {
+      throw new Error("Scheduling is only allowed for inbox tasks");
+    }
+    if (!task.enabled) {
+      throw new Error("Task must be enabled to schedule");
+    }
+    await ctx.db.patch(args.id, { schedule: args.schedule });
+    return true;
+  },
+});
+
+export const clearSchedule = mutation({
+  args: { id: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.id);
+    if (!task) return false;
+    await ctx.db.patch(args.id, { schedule: undefined });
     return true;
   },
 });

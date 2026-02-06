@@ -23,6 +23,15 @@ export default defineSchema({
       v.literal("blocked")
     ),
     assigneeIds: v.array(v.id("agents")),
+    enabled: v.boolean(),
+    schedule: v.optional(
+      v.object({
+        type: v.union(v.literal("once"), v.literal("cron")),
+        runAt: v.optional(v.number()),
+        cron: v.optional(v.string()),
+        jobId: v.optional(v.string()),
+      })
+    ),
     seed: v.optional(v.boolean()),
   }).index("by_status", ["status"]),
 

@@ -6,12 +6,14 @@ export const create = mutation({
     type: v.string(),
     agentId: v.optional(v.id("agents")),
     message: v.string(),
+    seed: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("activities", {
       type: args.type,
       agentId: args.agentId,
       message: args.message,
+      seed: args.seed,
     });
   },
 });
