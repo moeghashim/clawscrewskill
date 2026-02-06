@@ -199,32 +199,43 @@ export default function TasksPage() {
                     </Link>
 
                     {col.key === "inbox" && (
-                      <div className="flex items-center justify-between mt-2">
-                        <button
-                          onClick={() => onToggle(t, !t.enabled)}
-                          className={`font-mono text-[9px] px-3 py-1.5 border uppercase tracking-wider ${
-                            t.enabled ? "border-[var(--forest)]" : "border-[#3A3A38]/20 opacity-60"
-                          }`}
-                        >
-                          {t.enabled ? "On" : "Off"}
-                        </button>
-                        <div className="flex items-center gap-2">
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center justify-between">
                           <button
-                            disabled={!t.enabled}
-                            onClick={() => openSchedule(t)}
-                            className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider disabled:opacity-40"
+                            onClick={() => onToggle(t, !t.enabled)}
+                            className={`font-mono text-[9px] px-3 py-1.5 border uppercase tracking-wider ${
+                              t.enabled ? "border-[var(--forest)]" : "border-[#3A3A38]/20 opacity-60"
+                            }`}
                           >
-                            Schedule
+                            {t.enabled ? "On" : "Off"}
                           </button>
-                          {t.schedule && (
+                          <div className="flex items-center gap-2">
                             <button
-                              onClick={() => onClearSchedule(t)}
-                              className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
+                              disabled={!t.enabled}
+                              onClick={() => openSchedule(t)}
+                              className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider disabled:opacity-40"
                             >
-                              Clear
+                              Schedule
                             </button>
-                          )}
+                            {t.schedule && (
+                              <button
+                                onClick={() => onClearSchedule(t)}
+                                className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
                         </div>
+                        {t.schedule && (
+                          <div className="font-mono text-[8px] text-[#3A3A38]/50 uppercase tracking-widest">
+                            {t.schedule.type === "once" && t.schedule.runAt
+                              ? `Scheduled ${new Date(t.schedule.runAt).toLocaleString()}`
+                              : t.schedule.type === "cron"
+                                ? `Cron ${t.schedule.cron}`
+                                : "Scheduled"}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

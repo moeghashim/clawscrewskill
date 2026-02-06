@@ -59,6 +59,11 @@ export const toggleEnabled = mutation({
       schedule,
     });
 
+    await ctx.db.insert("activities", {
+      type: "task_toggle",
+      message: `${args.enabled ? "Enabled" : "Disabled"} task: ${task.title}`,
+    });
+
     return true;
   },
 });
@@ -83,6 +88,17 @@ export const setSchedule = mutation({
       throw new Error("Task must be enabled to schedule");
     }
     await ctx.db.patch(args.id, { schedule: args.schedule });
+
+    const scheduleText =
+      args.schedule.type === "once"
+        ? `one-time @ ${args.schedule.runAt ? new Date(args.schedule.runAt).toLocaleString() : ""}`
+        : `cron: ${args.schedule.cron ?? ""}`;
+
+    await ctx.db.insert("activities", {
+      type: "task_schedule",
+      message: `Scheduled task: ${task.title} (${scheduleText})`,
+    });
+
     return true;
   },
 });
@@ -93,6 +109,12 @@ export const clearSchedule = mutation({
     const task = await ctx.db.get(args.id);
     if (!task) return false;
     await ctx.db.patch(args.id, { schedule: undefined });
+
+    await ctx.db.insert("activities", {
+      type: "task_schedule_clear",
+      message: `Cleared schedule for task: ${task.title}`,
+    });
+
     return true;
   },
 });
