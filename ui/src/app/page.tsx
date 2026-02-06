@@ -130,24 +130,7 @@ export default function Home() {
             OpsCore // Mission Control
           </h1>
         </div>
-        <nav className="hidden lg:flex items-center gap-6">
-          <a className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#3A3A38]/60 flex items-center gap-2">
-            <span className="text-[var(--forest)]">01.</span> Dashboard
-          </a>
-          <a className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#3A3A38]/60 flex items-center gap-2">
-            <span className="text-[var(--forest)]">02.</span> Fleet Ops
-          </a>
-          <a className="font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--forest)] font-bold flex items-center gap-2">
-            <span className="text-[var(--forest)]">03.</span> Mission Log
-          </a>
-          <a className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#3A3A38]/60 flex items-center gap-2">
-            <span className="text-[var(--forest)]">04.</span> Network
-          </a>
-        </nav>
         <div className="flex items-center gap-3">
-          <button className="font-mono text-[9px] px-3 py-1.5 border border-[var(--grid)] hover:border-[#3A3A38]/50 uppercase tracking-wider">
-            System: Nominal
-          </button>
           <button
             onClick={() => setNewMissionOpen(true)}
             className="bg-[var(--forest)] text-white font-mono text-[9px] px-4 py-1.5 uppercase tracking-wider hover:opacity-90"
@@ -173,23 +156,6 @@ export default function Home() {
                   </a>
                 </li>
               </ul>
-            </div>
-            <div className="pt-5 border-t border-[#3A3A38]/10">
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40 mb-4">Infrastructure</p>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] uppercase tracking-tight">US-EAST-1</span>
-                  <span className="w-2 h-2 rounded-full bg-[#9EFFBF] animate-pulse"></span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] uppercase tracking-tight">EU-CENT-1</span>
-                  <span className="w-2 h-2 rounded-full bg-[#9EFFBF]"></span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] uppercase tracking-tight">AP-SOUTH-1</span>
-                  <span className="w-2 h-2 rounded-full bg-[#F4D35E]"></span>
-                </div>
-              </div>
             </div>
           </div>
           <div className="p-5 border-t border-[#3A3A38]/20 font-mono text-[8px] text-[#3A3A38]/40 uppercase tracking-widest">
@@ -266,31 +232,6 @@ export default function Home() {
           ))}
         </section>
 
-        <aside className="w-72 border-l border-[var(--grid)] flex flex-col bg-white">
-          <div className="p-4 border-b border-[var(--grid)] bg-[var(--paper)]">
-            <h2 className="font-header font-bold text-[11px] tracking-tight uppercase">Live Operations Feed</h2>
-          </div>
-          <div className="flex-1 overflow-y-auto p-0">
-            <div className="p-3 border-b border-[#3A3A38]/10 hover:bg-[var(--paper)]/50 transition-colors">
-              <div className="flex gap-2">
-                <span className="font-mono text-[9px] text-[#3A3A38]/40">01</span>
-                <div className="flex-1">
-                  <div className="flex justify-between mb-0.5">
-                    <span className="font-mono text-[9px] font-bold text-[var(--forest)]">SYSTEM_UPDATE</span>
-                    <span className="font-mono text-[8px] text-[#3A3A38]/40">14:20:11</span>
-                  </div>
-                  <p className="text-[10px] leading-relaxed text-[#3A3A38]">New build deployed to <span className="text-[var(--forest)] font-medium">staging-cluster-04</span>.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="p-3 bg-white border-t border-[var(--grid)]">
-            <div className="relative flex items-center">
-              <span className="absolute left-3 font-mono text-[9px] text-[var(--forest)]">$</span>
-              <input type="text" placeholder="CMD..." className="w-full bg-[var(--paper)] border border-[#3A3A38]/20 p-1.5 pl-6 font-mono text-[9px] uppercase tracking-wider focus:outline-none focus:border-[var(--forest)]" />
-            </div>
-          </div>
-        </aside>
       </main>
 
       <footer className="h-8 border-t border-[var(--grid)] bg-[var(--forest)] flex items-center justify-between px-4 z-20">
