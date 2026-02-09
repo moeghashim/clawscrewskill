@@ -382,9 +382,20 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className="flex-1 grid grid-cols-5 bg-[var(--paper)]/50 overflow-hidden">
-          {columns.map((col) => (
-            <div key={col.key} className="flex flex-col border-r border-[#3A3A38]/10">
+        <section className="flex-1 flex flex-col bg-[var(--paper)]/50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--grid)] bg-[var(--paper)] flex items-center gap-4">
+            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
+              Agents: <span className="text-[#3A3A38]">{agents.length}</span>
+            </div>
+            <div className="h-3 w-[1px] bg-[#3A3A38]/20"></div>
+            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
+              Running tasks: <span className="text-[#3A3A38]">{tasks.filter((t) => t.enabled !== false && !t.waitingForTaskId).length}</span>
+            </div>
+          </div>
+
+          <div className="flex-1 grid grid-cols-5 overflow-hidden">
+            {columns.map((col) => (
+              <div key={col.key} className="flex flex-col border-r border-[#3A3A38]/10">
               <div className="p-3 border-b border-[var(--grid)] flex items-center justify-between bg-[var(--paper)] sticky top-0 z-10">
                 <h2 className="font-header font-bold text-[11px] tracking-tight uppercase">{col.label}</h2>
                 <span className="font-mono text-[9px] opacity-40">{columnsData[col.key]?.length || 0}</span>
@@ -481,6 +492,7 @@ export default function Home() {
               </div>
             </div>
           ))}
+          </div>
         </section>
 
       </main>
