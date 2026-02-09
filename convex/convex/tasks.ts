@@ -167,6 +167,63 @@ export const clearSchedule = mutation({
   },
 });
 
+export const pause = mutation({
+  args: { id: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.id);
+    if (!task) return false;
+
+    if (task.schedule?.jobId) {
+      await ctx.scheduler.cancel(task.schedule.jobId);
+    }
+
+    await ctx.db.patch(args.id, { enabled: false, schedule: undefined });
+
+    await ctx.db.insert("activities", {
+      type: "task_pause",
+      message: `Paused task: ${task.title}`,
+    });
+
+    return true;
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.id);
+    if (!task) return false;
+
+    if (task.schedule?.jobId) {
+      await ctx.scheduler.cancel(task.schedule.jobId);
+    }
+
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_task", (q) => q.eq("taskId", args.id))
+      .collect();
+    for (const m of messages) {
+      await ctx.db.delete(m._id);
+    }
+
+    const docs = await ctx.db.query("documents").collect();
+    for (const d of docs) {
+      if (d.taskId === args.id) {
+        await ctx.db.delete(d._id);
+      }
+    }
+
+    await ctx.db.delete(args.id);
+
+    await ctx.db.insert("activities", {
+      type: "task_delete",
+      message: `Deleted task: ${task.title}`,
+    });
+
+    return true;
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {

@@ -70,6 +70,79 @@ export const setStatus = mutation({
   },
 });
 
+export const pause = mutation({
+  args: { agentId: v.id("agents") },
+  handler: async (ctx, args) => {
+    const agent = await ctx.db.get(args.agentId);
+    if (!agent) return false;
+
+    // Pause agent
+    await ctx.db.patch(args.agentId, { status: "blocked" });
+
+    // Pause all related tasks (disable + cancel schedule)
+    const tasks = await ctx.db.query("tasks").collect();
+    const related = tasks.filter((t) => t.assigneeIds.includes(args.agentId));
+
+    for (const t of related) {
+      if (t.schedule?.jobId) {
+        await ctx.scheduler.cancel(t.schedule.jobId);
+      }
+      await ctx.db.patch(t._id, { enabled: false, schedule: undefined });
+    }
+
+    await ctx.db.insert("activities", {
+      type: "agent_pause",
+      message: `Paused agent: ${agent.name} (paused ${related.length} tasks)`,
+    });
+
+    return true;
+  },
+});
+
+export const remove = mutation({
+  args: { agentId: v.id("agents") },
+  handler: async (ctx, args) => {
+    const agent = await ctx.db.get(args.agentId);
+    if (!agent) return false;
+
+    const tasks = await ctx.db.query("tasks").collect();
+    const related = tasks.filter((t) => t.assigneeIds.includes(args.agentId));
+
+    // Delete related tasks + their messages/documents
+    for (const t of related) {
+      if (t.schedule?.jobId) {
+        await ctx.scheduler.cancel(t.schedule.jobId);
+      }
+
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_task", (q) => q.eq("taskId", t._id))
+        .collect();
+      for (const m of messages) {
+        await ctx.db.delete(m._id);
+      }
+
+      const docs = await ctx.db.query("documents").collect();
+      for (const d of docs) {
+        if (d.taskId === t._id) {
+          await ctx.db.delete(d._id);
+        }
+      }
+
+      await ctx.db.delete(t._id);
+    }
+
+    await ctx.db.delete(args.agentId);
+
+    await ctx.db.insert("activities", {
+      type: "agent_delete",
+      message: `Deleted agent: ${agent.name} (deleted ${related.length} tasks)`,
+    });
+
+    return true;
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {

@@ -14,6 +14,7 @@ import type * as documents from "../documents.js";
 import type * as feed from "../feed.js";
 import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
+import type * as schedules from "../schedules.js";
 import type * as seed from "../seed.js";
 import type * as tasks from "../tasks.js";
 
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   feed: typeof feed;
   messages: typeof messages;
   notifications: typeof notifications;
+  schedules: typeof schedules;
   seed: typeof seed;
   tasks: typeof tasks;
 }>;

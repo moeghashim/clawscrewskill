@@ -14,11 +14,16 @@ const columns = [
 
 export default function Home() {
   const tasks = (useQuery(api.tasks.list) || []) as any[];
+  const agents = (useQuery(api.agents.list) || []) as any[];
   const createTask = useMutation(api.tasks.create);
   const toggleEnabled = useMutation(api.tasks.toggleEnabled);
+  const pauseTask = useMutation(api.tasks.pause);
+  const deleteTask = useMutation(api.tasks.remove);
   const setSchedule = useMutation(api.tasks.setSchedule);
   const clearSchedule = useMutation(api.tasks.clearSchedule);
   const upsertAgent = useMutation(api.agents.upsert);
+  const pauseAgent = useMutation(api.agents.pause);
+  const deleteAgent = useMutation(api.agents.remove);
 
   const [agentName, setAgentName] = useState("");
   const [mission, setMission] = useState("");
@@ -174,6 +179,28 @@ export default function Home() {
     done: doneTasks,
   } as Record<string, any[]>;
 
+  const agentsById = new Map<string, any>(agents.map((a) => [a._id, a]));
+
+  const onPauseTask = async (task: any) => {
+    await pauseTask({ id: task._id });
+  };
+
+  const onDeleteTask = async (task: any) => {
+    if (!confirm(`Delete task "${task.title}"?`)) return;
+    await deleteTask({ id: task._id });
+  };
+
+  const onPauseAgent = async (agentId: string) => {
+    if (!confirm(`Pause this agent and all its tasks?`)) return;
+    await pauseAgent({ agentId: agentId as any });
+  };
+
+  const onDeleteAgent = async (agentId: string) => {
+    const agent = agentsById.get(agentId);
+    if (!confirm(`Delete agent "${agent?.name ?? agentId}" and ALL related tasks?`)) return;
+    await deleteAgent({ agentId: agentId as any });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--paper)] relative overflow-hidden">
       <div
@@ -246,9 +273,9 @@ export default function Home() {
                       <p className="text-[10px] text-[#3A3A38]/60 mb-3">{t.description}</p>
                     </div>
 
-                    {col.key === "inbox" && (
-                      <div className="mt-2 space-y-2">
-                        <div className="flex items-center justify-between">
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        {col.key === "inbox" ? (
                           <button
                             onClick={() => onToggle(t, !(t.enabled ?? true))}
                             className={`font-mono text-[9px] px-3 py-1.5 border uppercase tracking-wider ${
@@ -257,7 +284,17 @@ export default function Home() {
                           >
                             {(t.enabled ?? true) ? "On" : "Off"}
                           </button>
-                          <div className="flex items-center gap-2">
+                        ) : (
+                          <button
+                            onClick={() => onPauseTask(t)}
+                            className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
+                          >
+                            Pause Task
+                          </button>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          {col.key === "inbox" && (
                             <button
                               disabled={t.enabled === false}
                               onClick={() => openSchedule(t)}
@@ -265,27 +302,56 @@ export default function Home() {
                             >
                               Schedule
                             </button>
-                            {t.schedule && (
-                              <button
-                                onClick={() => onClearSchedule(t)}
-                                className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
-                              >
-                                Clear
-                              </button>
-                            )}
+                          )}
+                          {col.key === "inbox" && t.schedule && (
+                            <button
+                              onClick={() => onClearSchedule(t)}
+                              className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
+                            >
+                              Clear
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDeleteTask(t)}
+                            className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      {t.assigneeIds?.[0] && (
+                        <div className="flex items-center justify-between">
+                          <div className="font-mono text-[8px] text-[#3A3A38]/50 uppercase tracking-widest">
+                            Agent: {agentsById.get(t.assigneeIds[0])?.name ?? t.assigneeIds[0].slice(0, 8)}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => onPauseAgent(t.assigneeIds[0])}
+                              className="font-mono text-[9px] px-3 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                            >
+                              Pause Agent
+                            </button>
+                            <button
+                              onClick={() => onDeleteAgent(t.assigneeIds[0])}
+                              className="font-mono text-[9px] px-3 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                            >
+                              Delete Agent
+                            </button>
                           </div>
                         </div>
-                        {t.schedule && (
-                          <div className="font-mono text-[8px] text-[#3A3A38]/50 uppercase tracking-widest">
-                            {t.schedule.type === "once" && t.schedule.runAt
-                              ? `Scheduled ${new Date(t.schedule.runAt).toLocaleString()}`
-                              : t.schedule.type === "cron"
-                                ? `Cron ${t.schedule.cron} ${t.schedule.timezone ? `(${t.schedule.timezone})` : ""}`
-                                : "Scheduled"}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      )}
+
+                      {col.key === "inbox" && t.schedule && (
+                        <div className="font-mono text-[8px] text-[#3A3A38]/50 uppercase tracking-widest">
+                          {t.schedule.type === "once" && t.schedule.runAt
+                            ? `Scheduled ${new Date(t.schedule.runAt).toLocaleString()}`
+                            : t.schedule.type === "cron"
+                              ? `Cron ${t.schedule.cron}`
+                              : "Scheduled"}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {columnsData[col.key]?.length === 0 && (
