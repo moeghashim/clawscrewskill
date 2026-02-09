@@ -42,6 +42,14 @@ export default function Home() {
 
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const runSteps = (useQuery(api.runSteps.byRun, { runId: (selectedRunId ?? undefined) as any }) || []) as any[];
+  const [selectedRunStepId, setSelectedRunStepId] = useState<string | null>(null);
+  const selectedRunStep = runSteps.find((s) => s._id === selectedRunStepId) || null;
+  const stepMessages = (useQuery(api.messages.byTask, {
+    taskId: (selectedRunStep?.taskId ?? undefined) as any,
+  }) || []) as any[];
+  const submitStepResult = useMutation(api.runEngine.submitStepResult);
+  const createMessage = useMutation(api.messages.create);
+  const [gateJsonDraft, setGateJsonDraft] = useState("{");
 
   const [agentName, setAgentName] = useState("");
   const [mission, setMission] = useState("");
@@ -406,14 +414,23 @@ export default function Home() {
                 {runs.map((r) => (
                   <button
                     key={r._id}
-                    onClick={() => setSelectedRunId(r._id)}
-                    className={`w-full text-left border border-[#3A3A38]/10 bg-white px-2 py-2 ${
-                      selectedRunId === r._id ? "border-[#3A3A38]/40" : "hover:border-[#3A3A38]/30"
-                    }`}
+                    onClick={() => {
+                      setSelectedRunId(r._id);
+                      setSelectedRunStepId(null);
+                    }}
+                    className={`w-full text-left border bg-white px-2 py-2 ${
+                      selectedRunId === r._id ? "border-[#3A3A38]/40" : "border-[#3A3A38]/10 hover:border-[#3A3A38]/30"
+                    } ${r.status === "needs_human" ? "bg-[var(--coral)]/5" : ""}`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="text-[11px] font-medium text-[#1A3C2B] truncate">{r.title}</div>
-                      <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">{r.status}</div>
+                      <div
+                        className={`font-mono text-[9px] uppercase tracking-widest ${
+                          r.status === "needs_human" ? "text-[var(--coral)]" : "text-[#3A3A38]/40"
+                        }`}
+                      >
+                        {r.status}
+                      </div>
                     </div>
                     <div className="font-mono text-[9px] text-[#3A3A38]/40 mt-1">{r.workflowKey}</div>
                   </button>
@@ -427,14 +444,79 @@ export default function Home() {
                   </div>
                   <div className="p-2 space-y-2">
                     {runSteps.map((s) => (
-                      <div key={s._id} className="flex items-center justify-between text-[10px]">
+                      <button
+                        key={s._id}
+                        onClick={() => {
+                          setSelectedRunStepId(s._id);
+                          setGateJsonDraft(s.lastGateResultJson || "{");
+                        }}
+                        className={`w-full text-left flex items-center justify-between text-[10px] border px-2 py-1 ${
+                          selectedRunStepId === s._id ? "border-[#3A3A38]/40" : "border-[#3A3A38]/10 hover:border-[#3A3A38]/20"
+                        }`}
+                      >
                         <div className="font-mono uppercase tracking-widest text-[#3A3A38]/60">
                           {String(s.index + 1).padStart(2, "0")} / {s.stepKey}
                         </div>
                         <div className="font-mono uppercase tracking-widest text-[#3A3A38]/40">{s.status}</div>
-                      </div>
+                      </button>
                     ))}
                   </div>
+
+                  {selectedRunStep && (
+                    <div className="border-t border-[#3A3A38]/10">
+                      <div className="p-2 border-b border-[#3A3A38]/10 font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40">
+                        Step Detail
+                      </div>
+                      <div className="p-2 space-y-2">
+                        <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/50">
+                          Role: {selectedRunStep.role} • Status: {selectedRunStep.status}
+                        </div>
+
+                        <textarea
+                          className="w-full border border-[#3A3A38]/20 px-2 py-2 text-[10px] font-mono min-h-[120px]"
+                          value={gateJsonDraft}
+                          onChange={(e) => setGateJsonDraft(e.target.value)}
+                          placeholder='{"status":"PASS","summary":"..."}'
+                        />
+                        <button
+                          onClick={async () => {
+                            if (!selectedRunStep.taskId) return;
+                            const fromAgentId = await ensureSystemAgentId();
+                            const msgId = await createMessage({
+                              taskId: selectedRunStep.taskId,
+                              fromAgentId,
+                              content: gateJsonDraft,
+                              attachments: [],
+                            } as any);
+                            await submitStepResult({ runStepId: selectedRunStep._id, messageId: msgId } as any);
+                          }}
+                          className="w-full border border-[#3A3A38]/20 hover:border-[#3A3A38]/50 px-2 py-2 font-mono text-[10px] uppercase tracking-wider"
+                        >
+                          Submit Gate Result
+                        </button>
+
+                        <div className="border border-[#3A3A38]/10">
+                          <div className="p-2 border-b border-[#3A3A38]/10 font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40">
+                            Messages
+                          </div>
+                          <div className="max-h-40 overflow-y-auto p-2 space-y-2">
+                            {stepMessages.length === 0 ? (
+                              <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">
+                                No messages
+                              </div>
+                            ) : (
+                              stepMessages.slice(-10).map((m) => (
+                                <div key={m._id} className="text-[10px]">
+                                  <div className="font-mono text-[9px] text-[#3A3A38]/40">{m._creationTime}</div>
+                                  <div className="text-[#3A3A38] whitespace-pre-wrap">{m.content}</div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
