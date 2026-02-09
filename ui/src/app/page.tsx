@@ -294,8 +294,8 @@ export default function Home() {
       </header>
 
       <main className="flex-1 flex overflow-hidden relative z-10">
-        <aside className="w-52 border-r border-[var(--grid)] flex flex-col bg-[var(--paper)]">
-          <div className="p-5 space-y-8 flex-1 overflow-y-auto">
+        <aside className="w-52 border-r border-[var(--grid)] flex flex-col bg-[var(--paper)] min-h-0">
+          <div className="p-5 space-y-8 flex-1 overflow-y-auto min-h-0">
             <div>
               <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40 mb-4">Agents</p>
               <ul className="space-y-2">
