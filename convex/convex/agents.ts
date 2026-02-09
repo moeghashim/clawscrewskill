@@ -12,7 +12,9 @@ export const upsert = mutation({
     soul: v.optional(v.string()),
     model: v.optional(v.string()),
     thinking: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
-    timezone: v.optional(v.string()),
+    toolsAllowed: v.optional(v.array(v.string())),
+    constraints: v.optional(v.string()),
+    repoPath: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -29,7 +31,9 @@ export const upsert = mutation({
         soul: args.soul ?? existing.soul,
         model: args.model ?? existing.model,
         thinking: args.thinking ?? existing.thinking,
-        timezone: args.timezone ?? existing.timezone,
+        toolsAllowed: args.toolsAllowed ?? existing.toolsAllowed,
+        constraints: args.constraints ?? existing.constraints,
+        repoPath: args.repoPath ?? existing.repoPath,
       });
       return existing._id;
     }
@@ -44,7 +48,9 @@ export const upsert = mutation({
       soul: args.soul,
       model: args.model,
       thinking: args.thinking,
-      timezone: args.timezone,
+      toolsAllowed: args.toolsAllowed,
+      constraints: args.constraints,
+      repoPath: args.repoPath,
     });
   },
 });

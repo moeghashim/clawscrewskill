@@ -23,6 +23,11 @@ export default function Home() {
   const [agentName, setAgentName] = useState("");
   const [mission, setMission] = useState("");
   const [soul, setSoul] = useState("");
+  const [agentModel, setAgentModel] = useState("");
+  const [toolsAllowed, setToolsAllowed] = useState("");
+  const [constraints, setConstraints] = useState("");
+  const [repoPath, setRepoPath] = useState("");
+  const [missionCron, setMissionCron] = useState("");
   const [newMissionOpen, setNewMissionOpen] = useState(false);
 
   const [scheduleTaskId, setScheduleTaskId] = useState<string | null>(null);
@@ -42,7 +47,6 @@ export default function Home() {
     e.preventDefault();
     if (!agentName || !mission || !soul) return;
 
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const sessionKey = `agent:${slug(agentName)}:${Date.now()}`;
 
     const agentId = await upsertAgent({
@@ -52,19 +56,43 @@ export default function Home() {
       status: "idle",
       mission,
       soul,
-      timezone,
+      model: agentModel || undefined,
       thinking: "low",
+      toolsAllowed: toolsAllowed
+        ? toolsAllowed
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
+      constraints: constraints || undefined,
+      repoPath: repoPath || undefined,
     } as any);
 
-    await createTask({
+    const taskId = await createTask({
       title: mission,
       description: `Agent: ${agentName}`,
       assigneeIds: [agentId],
     } as any);
 
+    if (missionCron.trim()) {
+      const parts = missionCron.trim().split(/\s+/);
+      if (parts.length < 5) {
+        throw new Error("Mission schedule cron must have 5 fields");
+      }
+      await setSchedule({
+        id: taskId,
+        schedule: { type: "cron", cron: missionCron.trim() },
+      } as any);
+    }
+
     setAgentName("");
     setMission("");
     setSoul("");
+    setAgentModel("");
+    setToolsAllowed("");
+    setConstraints("");
+    setRepoPath("");
+    setMissionCron("");
     setNewMissionOpen(false);
   };
 
@@ -102,10 +130,9 @@ export default function Home() {
           setCronError("Cron must have 5 fields");
           return;
         }
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         await setSchedule({
           id: scheduleTaskId as any,
-          schedule: { type: "cron", cron, timezone },
+          schedule: { type: "cron", cron },
         });
       }
 
@@ -114,6 +141,14 @@ export default function Home() {
       setCron("");
     } catch (err: any) {
       setCronError(err?.message || "Schedule failed");
+    }
+  };
+
+  const onCreateWithErrorHandling = async (e: React.FormEvent) => {
+    try {
+      await onCreate(e);
+    } catch (err: any) {
+      setCronError(err?.message || "Create mission failed");
     }
   };
 
@@ -284,7 +319,7 @@ export default function Home() {
             <div className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-mono">
               New Mission
             </div>
-            <form onSubmit={onCreate} className="mt-4 space-y-3">
+            <form onSubmit={onCreateWithErrorHandling} className="mt-4 space-y-3">
               <input
                 className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
                 placeholder="Agent name"
@@ -305,6 +340,36 @@ export default function Home() {
                 value={soul}
                 onChange={(e) => setSoul(e.target.value)}
                 required
+              />
+              <input
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                placeholder="Agent model (optional)"
+                value={agentModel}
+                onChange={(e) => setAgentModel(e.target.value)}
+              />
+              <input
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                placeholder="Tools allowed (comma-separated, optional)"
+                value={toolsAllowed}
+                onChange={(e) => setToolsAllowed(e.target.value)}
+              />
+              <input
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                placeholder="Repo path (optional, e.g. /Users/moeghashim/projects/clawscrew)"
+                value={repoPath}
+                onChange={(e) => setRepoPath(e.target.value)}
+              />
+              <textarea
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm min-h-[90px]"
+                placeholder="Constraints / do-not-do (optional)"
+                value={constraints}
+                onChange={(e) => setConstraints(e.target.value)}
+              />
+              <input
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
+                placeholder="Mission schedule cron (optional, e.g. 0 9 * * 1)"
+                value={missionCron}
+                onChange={(e) => setMissionCron(e.target.value)}
               />
               <div className="flex gap-2">
                 <button

@@ -15,7 +15,11 @@ export default defineSchema({
     // Optional operational hints
     model: v.optional(v.string()),
     thinking: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
-    timezone: v.optional(v.string()),
+
+    // Optional operational controls
+    toolsAllowed: v.optional(v.array(v.string())),
+    constraints: v.optional(v.string()),
+    repoPath: v.optional(v.string()),
 
     seed: v.optional(v.boolean()),
   }).index("by_sessionKey", ["sessionKey"]),
@@ -38,7 +42,6 @@ export default defineSchema({
         type: v.union(v.literal("once"), v.literal("cron")),
         runAt: v.optional(v.number()),
         cron: v.optional(v.string()),
-        timezone: v.optional(v.string()),
         jobId: v.optional(v.string()),
       })
     ),

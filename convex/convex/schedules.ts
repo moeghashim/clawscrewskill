@@ -19,7 +19,6 @@ export const runTaskSchedule = internalMutation({
     if (task.schedule.type === "cron" && task.schedule.cron) {
       const interval = cronParser.parseExpression(task.schedule.cron, {
         currentDate: new Date(),
-        tz: task.schedule.timezone,
       });
       const next = interval.next().toDate();
 

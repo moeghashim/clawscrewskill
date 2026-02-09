@@ -81,7 +81,6 @@ export const setSchedule = mutation({
       type: v.union(v.literal("once"), v.literal("cron")),
       runAt: v.optional(v.number()),
       cron: v.optional(v.string()),
-      timezone: v.optional(v.string()),
       jobId: v.optional(v.string()),
     }),
   },
@@ -116,7 +115,6 @@ export const setSchedule = mutation({
       }
       const interval = cronParser.parseExpression(args.schedule.cron, {
         currentDate: new Date(),
-        tz: args.schedule.timezone,
       });
       const next = interval.next().toDate();
       jobId = await ctx.scheduler.runAt(next, internal.schedules.runTaskSchedule, {
@@ -134,7 +132,7 @@ export const setSchedule = mutation({
     const scheduleText =
       args.schedule.type === "once"
         ? `one-time @ ${args.schedule.runAt ? new Date(args.schedule.runAt).toLocaleString() : ""}`
-        : `cron: ${args.schedule.cron ?? ""} (${args.schedule.timezone ?? "local"})`;
+        : `cron: ${args.schedule.cron ?? ""}`;
 
     await ctx.db.insert("activities", {
       type: "task_schedule",
