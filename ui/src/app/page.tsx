@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
-import { PauseIcon, PlayIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PauseIcon, PlayIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 const columns = [
   { key: "inbox", label: "01 / Inbox" },
