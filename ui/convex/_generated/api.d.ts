@@ -10,6 +10,7 @@
 
 import type * as activities from "../activities.js";
 import type * as agents from "../agents.js";
+import type * as directMessages from "../directMessages.js";
 import type * as documents from "../documents.js";
 import type * as feed from "../feed.js";
 import type * as messages from "../messages.js";
@@ -27,6 +28,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   agents: typeof agents;
+  directMessages: typeof directMessages;
   documents: typeof documents;
   feed: typeof feed;
   messages: typeof messages;

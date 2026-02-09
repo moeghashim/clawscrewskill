@@ -28,10 +28,11 @@ export const send = mutation({
 
 export const thread = query({
   args: {
-    agentId: v.id("agents"),
+    agentId: v.optional(v.id("agents")),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    if (!args.agentId) return [];
     const limit = args.limit ?? 50;
     const all = await ctx.db.query("directMessages").order("desc").take(200);
     return all

@@ -26,6 +26,17 @@ export default function Home() {
   const pauseAgent = useMutation(api.agents.pause);
   const deleteAgent = useMutation(api.agents.remove);
 
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [dmDraft, setDmDraft] = useState("");
+
+  const unreadCounts = (useQuery(api.directMessages.unreadCounts) || {}) as Record<string, number>;
+  const dmThread = (useQuery(api.directMessages.thread, {
+    agentId: selectedAgentId as any,
+    limit: 50,
+  }) || []) as any[];
+  const markReadForAgent = useMutation(api.directMessages.markReadForAgent);
+  const sendDm = useMutation(api.directMessages.send);
+
   const [agentName, setAgentName] = useState("");
   const [mission, setMission] = useState("");
   const [soul, setSoul] = useState("");
@@ -36,7 +47,6 @@ export default function Home() {
   const [missionCron, setMissionCron] = useState("");
   const [newMissionOpen, setNewMissionOpen] = useState(false);
 
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const [scheduleTaskId, setScheduleTaskId] = useState<string | null>(null);
   const [scheduleType, setScheduleType] = useState<"once" | "cron">("once");
@@ -209,6 +219,30 @@ export default function Home() {
     if (selectedAgentId === agentId) setSelectedAgentId(null);
   };
 
+  const ensureSystemAgentId = async () => {
+    return await upsertAgent({
+      name: "System",
+      role: "system",
+      sessionKey: "system",
+      status: "active",
+    } as any);
+  };
+
+  const onSendDm = async () => {
+    if (!selectedAgentId) return;
+    const content = dmDraft.trim();
+    if (!content) return;
+
+    const fromAgentId = await ensureSystemAgentId();
+    await sendDm({
+      toAgentId: selectedAgentId as any,
+      fromAgentId,
+      content,
+    } as any);
+    setDmDraft("");
+    await markReadForAgent({ agentId: selectedAgentId as any });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--paper)] relative overflow-hidden">
       <div
@@ -262,7 +296,10 @@ export default function Home() {
                 {agents.map((a) => (
                   <li key={a._id}>
                     <button
-                      onClick={() => setSelectedAgentId(a._id)}
+                      onClick={async () => {
+                        setSelectedAgentId(a._id);
+                        await markReadForAgent({ agentId: a._id as any });
+                      }}
                       className={`w-full text-left flex items-center justify-between text-[12px] ${
                         selectedAgentId === a._id ? "font-medium text-[var(--forest)]" : "text-[#3A3A38]/60"
                       }`}
@@ -271,23 +308,68 @@ export default function Home() {
                         <span className={`w-1 h-1 rounded-full ${a.status === "blocked" ? "bg-[var(--coral)]" : "bg-[var(--forest)]"}`}></span>
                         {a.name}
                       </span>
-                      <span className="font-mono text-[9px] opacity-40">[{tasks.filter((t) => t.assigneeIds?.includes(a._id)).length}]</span>
+                      <span className="flex items-center gap-2">
+                        {unreadCounts[a._id] ? (
+                          <span className="font-mono text-[9px] px-1.5 py-0.5 border border-[#3A3A38]/20 bg-white">
+                            {unreadCounts[a._id]}
+                          </span>
+                        ) : null}
+                        <span className="font-mono text-[9px] opacity-40">[{tasks.filter((t) => t.assigneeIds?.includes(a._id)).length}]</span>
+                      </span>
                     </button>
 
                     {selectedAgentId === a._id && (
-                      <div className="mt-2 flex gap-2">
-                        <button
-                          onClick={() => onPauseAgent(a._id)}
-                          className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
-                        >
-                          Pause
-                        </button>
-                        <button
-                          onClick={() => onDeleteAgent(a._id)}
-                          className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
-                        >
-                          Delete
-                        </button>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => onPauseAgent(a._id)}
+                            className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                          >
+                            Pause
+                          </button>
+                          <button
+                            onClick={() => onDeleteAgent(a._id)}
+                            className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                          >
+                            Delete
+                          </button>
+                        </div>
+
+                        <div className="border border-[#3A3A38]/10 bg-white">
+                          <div className="p-2 border-b border-[#3A3A38]/10 font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40">
+                            Mailbox
+                          </div>
+                          <div className="max-h-40 overflow-y-auto p-2 space-y-2">
+                            {dmThread.length === 0 && (
+                              <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">
+                                No messages
+                              </div>
+                            )}
+                            {dmThread.map((m) => (
+                              <div key={m._id} className="text-[10px]">
+                                <div className="font-mono text-[9px] text-[#3A3A38]/40">
+                                  {agentsById.get(m.fromAgentId)?.name ?? m.fromAgentId.slice(0, 8)}
+                                  {m.read ? "" : " (unread)"}
+                                </div>
+                                <div className="text-[#3A3A38]">{m.content}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="p-2 border-t border-[#3A3A38]/10 flex gap-2">
+                            <input
+                              className="flex-1 border border-[#3A3A38]/20 px-2 py-1 text-[10px]"
+                              placeholder="Message…"
+                              value={dmDraft}
+                              onChange={(e) => setDmDraft(e.target.value)}
+                            />
+                            <button
+                              onClick={onSendDm}
+                              className="border border-[#3A3A38]/20 px-2 py-1 text-[10px] font-mono uppercase tracking-wider"
+                            >
+                              Send
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </li>
