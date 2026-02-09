@@ -147,7 +147,16 @@ async function install({ dryRun }) {
 
     process.stdout.write(`Wrote ${uiEnvLocal}\n\n`);
     process.stdout.write("\nConfiguring Vercel...\n\n");
-    // Link repo root to the Vercel project (assumes vercel CLI is installed)
+
+    // Confirm vercel auth
+    try {
+      run("vercel", ["whoami"], { cwd: repoRoot });
+    } catch {
+      process.stdout.write("\nVercel login required. Run: vercel login\n\n");
+      throw new Error("Not logged into Vercel");
+    }
+
+    // Link repo root to the Vercel project
     run("vercel", ["link", "--project", vercelProject, "--yes"], { cwd: repoRoot });
 
     const envs = ["production", "preview", "development"];
