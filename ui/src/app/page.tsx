@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
-import { PauseIcon, PlayIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PauseIcon, PlayIcon, TrashIcon, BoltIcon } from "@heroicons/react/24/solid";
 
 const columns = [
   { key: "inbox", label: "01 / Inbox" },
@@ -36,6 +36,7 @@ export default function Home() {
   }) || []) as any[];
   const markReadForAgent = useMutation(api.directMessages.markReadForAgent);
   const sendDm = useMutation(api.directMessages.send);
+  const runWave = useMutation(api.waves.runWave);
 
   const [agentName, setAgentName] = useState("");
   const [mission, setMission] = useState("");
@@ -383,14 +384,29 @@ export default function Home() {
         </aside>
 
         <section className="flex-1 flex flex-col bg-[var(--paper)]/50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--grid)] bg-[var(--paper)] flex items-center gap-4">
-            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
-              Agents: <span className="text-[#3A3A38]">{agents.length}</span>
+          <div className="px-4 py-3 border-b border-[var(--grid)] bg-[var(--paper)] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
+                Agents: <span className="text-[#3A3A38]">{agents.length}</span>
+              </div>
+              <div className="h-3 w-[1px] bg-[#3A3A38]/20"></div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
+                Running tasks:{" "}
+                <span className="text-[#3A3A38]">{tasks.filter((t) => t.enabled !== false && !(t.dependsOnTaskIds?.length) && !t.waitingForTaskId).length}</span>
+              </div>
             </div>
-            <div className="h-3 w-[1px] bg-[#3A3A38]/20"></div>
-            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
-              Running tasks: <span className="text-[#3A3A38]">{tasks.filter((t) => t.enabled !== false && !t.waitingForTaskId).length}</span>
-            </div>
+
+            <button
+              onClick={async () => {
+                const systemId = await ensureSystemAgentId();
+                await runWave({ runnerAgentId: systemId, limit: 5 } as any);
+              }}
+              className="flex items-center gap-2 border border-[#3A3A38]/20 hover:border-[#3A3A38]/50 px-3 py-1.5"
+              title="Run next wave (claim + start ready tasks)"
+            >
+              <BoltIcon className="w-4 h-4 text-[#3A3A38]/70" />
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/70">Run Wave</span>
+            </button>
           </div>
 
           <div className="flex-1 grid grid-cols-5 overflow-hidden">

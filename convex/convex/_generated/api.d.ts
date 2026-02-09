@@ -18,6 +18,7 @@ import type * as notifications from "../notifications.js";
 import type * as schedules from "../schedules.js";
 import type * as seed from "../seed.js";
 import type * as tasks from "../tasks.js";
+import type * as waves from "../waves.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   schedules: typeof schedules;
   seed: typeof seed;
   tasks: typeof tasks;
+  waves: typeof waves;
 }>;
 
 /**
