@@ -35,6 +35,8 @@ export default function Home() {
   const [missionCron, setMissionCron] = useState("");
   const [newMissionOpen, setNewMissionOpen] = useState(false);
 
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+
   const [scheduleTaskId, setScheduleTaskId] = useState<string | null>(null);
   const [scheduleType, setScheduleType] = useState<"once" | "cron">("once");
   const [runAt, setRunAt] = useState("");
@@ -235,17 +237,38 @@ export default function Home() {
         <aside className="w-52 border-r border-[var(--grid)] flex flex-col bg-[var(--paper)]">
           <div className="p-5 space-y-8 flex-1 overflow-y-auto">
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40 mb-4">Mission Folders</p>
-              <ul className="space-y-3">
+              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40 mb-4">Agents</p>
+              <ul className="space-y-2">
                 <li>
-                  <a className="flex items-center justify-between text-[12px] font-medium text-[var(--forest)]">
+                  <button
+                    onClick={() => setSelectedAgentId(null)}
+                    className={`w-full text-left flex items-center justify-between text-[12px] ${
+                      selectedAgentId === null ? "font-medium text-[var(--forest)]" : "text-[#3A3A38]/60"
+                    }`}
+                  >
                     <span className="flex items-center gap-2">
                       <span className="w-1 h-1 bg-[var(--forest)] rounded-full"></span>
                       All Tasks
                     </span>
                     <span className="font-mono text-[9px] opacity-40">[{tasks.length}]</span>
-                  </a>
+                  </button>
                 </li>
+                {agents.map((a) => (
+                  <li key={a._id}>
+                    <button
+                      onClick={() => setSelectedAgentId(a._id)}
+                      className={`w-full text-left flex items-center justify-between text-[12px] ${
+                        selectedAgentId === a._id ? "font-medium text-[var(--forest)]" : "text-[#3A3A38]/60"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className={`w-1 h-1 rounded-full ${a.status === "blocked" ? "bg-[var(--coral)]" : "bg-[var(--forest)]"}`}></span>
+                        {a.name}
+                      </span>
+                      <span className="font-mono text-[9px] opacity-40">[{tasks.filter((t) => t.assigneeIds?.includes(a._id)).length}]</span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
