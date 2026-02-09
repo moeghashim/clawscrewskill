@@ -3,12 +3,13 @@ import { v } from "convex/values";
 
 export const byRun = query({
   args: {
-    runId: v.id("runs"),
+    runId: v.optional(v.id("runs")),
   },
   handler: async (ctx, args) => {
+    if (!args.runId) return [];
     return await ctx.db
       .query("runSteps")
-      .withIndex("by_run", (q) => q.eq("runId", args.runId))
+      .withIndex("by_run", (q) => q.eq("runId", args.runId!))
       .order("asc")
       .collect();
   },
