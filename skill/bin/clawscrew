@@ -104,12 +104,21 @@ async function install({ dryRun }) {
       },
       vercel: {
         project: vercelProject,
+        actions: [
+          "vercel login (if needed)",
+          `vercel link --project ${vercelProject} --yes`,
+          "vercel env add NEXT_PUBLIC_CONVEX_URL production/preview/development",
+          "vercel env add ADMIN_EMAIL production/preview/development",
+          "vercel env add ADMIN_PASSWORD production/preview/development (sensitive)",
+          "vercel deploy --prod --cwd ui",
+        ],
         envVars: {
           NEXT_PUBLIC_CONVEX_URL: convexUrl || "<set after Convex setup>",
           ADMIN_EMAIL: adminEmail || "<required>",
           ADMIN_PASSWORD: adminPassword ? "<provided>" : "<required>",
         },
         rootDir: "ui",
+        note: "For Git deployments, set Vercel Project Settings → Root Directory = ui",
       },
     };
 
@@ -137,9 +146,37 @@ async function install({ dryRun }) {
     });
 
     process.stdout.write(`Wrote ${uiEnvLocal}\n\n`);
-    process.stdout.write("Next steps (manual in A1):\n");
-    process.stdout.write("- Convex: create or select a deployment, then set NEXT_PUBLIC_CONVEX_URL in Vercel + ui/.env.local\n");
-    process.stdout.write("- Vercel: link repo, set Root Directory=ui, set ADMIN_EMAIL/ADMIN_PASSWORD, deploy\n");
+    process.stdout.write("\nConfiguring Vercel...\n\n");
+    // Link repo root to the Vercel project (assumes vercel CLI is installed)
+    run("vercel", ["link", "--project", vercelProject, "--yes"], { cwd: repoRoot });
+
+    const envs = ["production", "preview", "development"];
+    for (const target of envs) {
+      // From stdin: vercel env add NAME target --force --yes
+      spawnSync("vercel", ["env", "add", "NEXT_PUBLIC_CONVEX_URL", target, "--force", "--yes"], {
+        cwd: repoRoot,
+        input: `${convexUrl}\n`,
+        stdio: ["pipe", "inherit", "inherit"],
+        env: process.env,
+      });
+      spawnSync("vercel", ["env", "add", "ADMIN_EMAIL", target, "--force", "--yes"], {
+        cwd: repoRoot,
+        input: `${adminEmail}\n`,
+        stdio: ["pipe", "inherit", "inherit"],
+        env: process.env,
+      });
+      spawnSync("vercel", ["env", "add", "ADMIN_PASSWORD", target, "--sensitive", "--force", "--yes"], {
+        cwd: repoRoot,
+        input: `${adminPassword}\n`,
+        stdio: ["pipe", "inherit", "inherit"],
+        env: process.env,
+      });
+    }
+
+    process.stdout.write("\nTriggering a production deploy from ui/ ...\n\n");
+    run("vercel", ["deploy", "--prod", "--cwd", "ui"], { cwd: repoRoot });
+
+    process.stdout.write("\nNOTE: For GitHub-based deployments, set Vercel Project Settings → Root Directory = ui.\n");
   } finally {
     rl.close();
   }
