@@ -55,16 +55,18 @@ function readEnvFile(filePath) {
   return out;
 }
 
-function run(cmd, args, { cwd } = {}) {
+function run(cmd, args, { cwd, captureStdout } = {}) {
   const res = spawnSync(cmd, args, {
     cwd,
-    stdio: "inherit",
+    stdio: captureStdout ? ["inherit", "pipe", "inherit"] : "inherit",
     env: process.env,
+    encoding: "utf8",
   });
   if (res.status !== 0) {
     const code = res.status ?? 1;
     throw new Error(`Command failed (${code}): ${cmd} ${args.join(" ")}`);
   }
+  return captureStdout ? (res.stdout || "") : "";
 }
 
 async function install({ dryRun }) {
@@ -183,7 +185,36 @@ async function install({ dryRun }) {
     }
 
     process.stdout.write("\nTriggering a production deploy from ui/ ...\n\n");
-    run("vercel", ["deploy", "--prod", "--cwd", "ui"], { cwd: repoRoot });
+    const deployOut = run("vercel", ["deploy", "--prod", "--cwd", "ui"], { cwd: repoRoot, captureStdout: true });
+    const urlMatch = deployOut.match(/https:\/\/[a-z0-9-]+\.vercel\.app/gi);
+    const deployedUrl = urlMatch ? urlMatch[urlMatch.length - 1] : null;
+
+    process.stdout.write("\nSeeding + smoke checks...\n\n");
+    // Load Convex deployment info from convex/.env.local
+    const convexEnv = readEnvFile(convexEnvLocal);
+    if (!convexEnv.CONVEX_DEPLOYMENT) {
+      throw new Error(`Missing CONVEX_DEPLOYMENT in ${convexEnvLocal}`);
+    }
+    process.env.CONVEX_DEPLOYMENT = convexEnv.CONVEX_DEPLOYMENT;
+    if (convexEnv.CONVEX_URL) process.env.CONVEX_URL = convexEnv.CONVEX_URL;
+
+    // Seed
+    run("npx", ["convex", "run", "seed:seedData", "{}"], { cwd: convexDir });
+
+    // Smoke query
+    run(
+      "npx",
+      ["convex", "run", "tasks:list", "{}"],
+      {
+        cwd: convexDir,
+      }
+    );
+
+    process.stdout.write("\nInstall complete.\n");
+    if (deployedUrl) {
+      process.stdout.write(`Vercel URL: ${deployedUrl}\n`);
+    }
+    process.stdout.write(`Convex URL: ${convexUrl}\n`);
 
     process.stdout.write("\nNOTE: For GitHub-based deployments, set Vercel Project Settings → Root Directory = ui.\n");
   } finally {
