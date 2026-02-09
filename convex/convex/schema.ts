@@ -102,4 +102,59 @@ export default defineSchema({
   })
     .index("by_to_read", ["toAgentId", "read"])
     .index("by_to", ["toAgentId"]),
+
+  workflows: defineTable({
+    key: v.string(),
+    name: v.string(),
+    yaml: v.string(),
+    enabled: v.boolean(),
+    version: v.number(),
+    seed: v.optional(v.boolean()),
+  }).index("by_key", ["key"]),
+
+  runs: defineTable({
+    workflowKey: v.string(),
+    title: v.string(),
+    status: v.union(
+      v.literal("running"),
+      v.literal("blocked"),
+      v.literal("needs_human"),
+      v.literal("done"),
+      v.literal("canceled")
+    ),
+    currentStepIndex: v.number(),
+    createdByAgentId: v.optional(v.id("agents")),
+    startedAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+    seed: v.optional(v.boolean()),
+  }).index("by_status", ["status"]),
+
+  runSteps: defineTable({
+    runId: v.id("runs"),
+    index: v.number(),
+    stepKey: v.string(),
+    role: v.union(
+      v.literal("planner"),
+      v.literal("dev"),
+      v.literal("verifier"),
+      v.literal("tester"),
+      v.literal("reviewer")
+    ),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("running"),
+      v.literal("passed"),
+      v.literal("failed"),
+      v.literal("blocked"),
+      v.literal("needs_human")
+    ),
+    retriesUsed: v.number(),
+    retryLimit: v.number(),
+    gateJsonSchema: v.optional(v.string()),
+    taskId: v.optional(v.id("tasks")),
+    assignedAgentId: v.optional(v.id("agents")),
+    lastMessageId: v.optional(v.id("messages")),
+    lastGateResultJson: v.optional(v.string()),
+    seed: v.optional(v.boolean()),
+  }).index("by_run", ["runId"]),
 });
