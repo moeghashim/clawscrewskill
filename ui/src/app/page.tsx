@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
+import { PauseIcon, PlayIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 const columns = [
   { key: "inbox", label: "01 / Inbox" },
@@ -339,17 +340,21 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => ((t.enabled ?? true) ? onPauseTask(t) : onToggle(t, true))}
-                            className="font-mono text-[10px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                            className="px-2 py-1 border border-[#3A3A38]/20 hover:border-[#3A3A38]/50"
                             title={(t.enabled ?? true) ? "Pause task" : "Resume task"}
                           >
-                            {t.enabled === false ? "▶" : "Ⅱ"}
+                            {t.enabled === false ? (
+                              <PlayIcon className="w-4 h-4 text-[#3A3A38]/70" />
+                            ) : (
+                              <PauseIcon className="w-4 h-4 text-[#3A3A38]/70" />
+                            )}
                           </button>
                           <button
                             onClick={() => onDeleteTask(t)}
-                            className="font-mono text-[10px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                            className="px-2 py-1 border border-[#3A3A38]/20 hover:border-[#3A3A38]/50"
                             title="Delete task"
                           >
-                            ⌫
+                            <TrashIcon className="w-4 h-4 text-[#3A3A38]/70" />
                           </button>
                         </div>
                       </div>
