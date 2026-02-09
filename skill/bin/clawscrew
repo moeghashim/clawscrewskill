@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
+import { spawnSync } from "node:child_process";
 
 function usage() {
   process.stdout.write(`clawscrew
@@ -38,20 +39,69 @@ function writeEnvFile(filePath, kv) {
   fs.writeFileSync(filePath, lines.join("\n"), "utf8");
 }
 
+function readEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return {};
+  const out = {};
+  const text = fs.readFileSync(filePath, "utf8");
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const k = trimmed.slice(0, eq).trim();
+    const v = trimmed.slice(eq + 1).trim();
+    out[k] = v;
+  }
+  return out;
+}
+
+function run(cmd, args, { cwd } = {}) {
+  const res = spawnSync(cmd, args, {
+    cwd,
+    stdio: "inherit",
+    env: process.env,
+  });
+  if (res.status !== 0) {
+    const code = res.status ?? 1;
+    throw new Error(`Command failed (${code}): ${cmd} ${args.join(" ")}`);
+  }
+}
+
 async function install({ dryRun }) {
   const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "..");
   const uiEnvLocal = path.join(repoRoot, "ui", ".env.local");
+  const convexDir = path.join(repoRoot, "convex");
+  const convexEnvLocal = path.join(convexDir, ".env.local");
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   try {
     const vercelProject = (await question(rl, "Vercel project name (default: clawscrew): ")).trim() || "clawscrew";
     const adminEmail = (await question(rl, "Admin email (for login gate): ")).trim();
     const adminPassword = (await question(rl, "Admin password: ")).trim();
-    const convexUrl = (await question(rl, "Convex URL (optional for now): ")).trim();
+    let convexUrl = (await question(rl, "Convex URL (optional; press Enter to configure now): ")).trim();
+
+    if (!convexUrl) {
+      const ans = (await question(rl, "Run interactive Convex setup now? (Y/n): ")).trim().toLowerCase();
+      const ok = ans === "" || ans === "y" || ans === "yes";
+      if (ok) {
+        process.stdout.write("\nStarting Convex interactive setup (this may prompt for login)...\n\n");
+        run("npx", ["convex", "dev", "--once"], { cwd: convexDir });
+        const env = readEnvFile(convexEnvLocal);
+        convexUrl = env.CONVEX_URL || "";
+        if (!convexUrl) {
+          throw new Error(`Convex setup completed but ${convexEnvLocal} did not contain CONVEX_URL`);
+        }
+        process.stdout.write(`\nDetected Convex URL: ${convexUrl}\n\n`);
+      }
+    }
 
     const planned = {
       repoRoot,
       writeFiles: [uiEnvLocal],
+      convex: {
+        configured: !!convexUrl,
+        envFile: convexEnvLocal,
+      },
       vercel: {
         project: vercelProject,
         envVars: {
