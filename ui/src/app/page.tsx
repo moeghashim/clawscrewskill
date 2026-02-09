@@ -330,35 +330,40 @@ export default function Home() {
 
                     <div className="mt-2 space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        {col.key === "inbox" ? (
-                          <button
-                            onClick={() => onToggle(t, !(t.enabled ?? true))}
-                            className={`font-mono text-[9px] px-3 py-1.5 border uppercase tracking-wider ${
-                              (t.enabled ?? true) ? "border-[var(--forest)]" : "border-[#3A3A38]/20 opacity-60"
-                            }`}
-                          >
-                            {(t.enabled ?? true) ? "On" : "Off"}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => onPauseTask(t)}
-                            className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
-                          >
-                            Pause Task
-                          </button>
-                        )}
+                        <div className="font-mono text-[8px] text-[#3A3A38]/50 uppercase tracking-widest">
+                          {t.assigneeIds?.[0]
+                            ? `Agent: ${agentsById.get(t.assigneeIds[0])?.name ?? t.assigneeIds[0].slice(0, 8)}`
+                            : "Unassigned"}
+                        </div>
 
                         <div className="flex items-center gap-2">
-                          {col.key === "inbox" && (
-                            <button
-                              disabled={t.enabled === false}
-                              onClick={() => openSchedule(t)}
-                              className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider disabled:opacity-40"
-                            >
-                              Schedule
-                            </button>
-                          )}
-                          {col.key === "inbox" && t.schedule && (
+                          <button
+                            onClick={() => ((t.enabled ?? true) ? onPauseTask(t) : onToggle(t, true))}
+                            className="font-mono text-[10px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                            title={(t.enabled ?? true) ? "Pause task" : "Resume task"}
+                          >
+                            {t.enabled === false ? "▶" : "Ⅱ"}
+                          </button>
+                          <button
+                            onClick={() => onDeleteTask(t)}
+                            className="font-mono text-[10px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                            title="Delete task"
+                          >
+                            ⌫
+                          </button>
+                        </div>
+                      </div>
+
+                      {col.key === "inbox" && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            disabled={t.enabled === false}
+                            onClick={() => openSchedule(t)}
+                            className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider disabled:opacity-40"
+                          >
+                            Schedule
+                          </button>
+                          {t.schedule && (
                             <button
                               onClick={() => onClearSchedule(t)}
                               className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
@@ -366,34 +371,6 @@ export default function Home() {
                               Clear
                             </button>
                           )}
-                          <button
-                            onClick={() => onDeleteTask(t)}
-                            className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-
-                      {t.assigneeIds?.[0] && (
-                        <div className="flex items-center justify-between">
-                          <div className="font-mono text-[8px] text-[#3A3A38]/50 uppercase tracking-widest">
-                            Agent: {agentsById.get(t.assigneeIds[0])?.name ?? t.assigneeIds[0].slice(0, 8)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => onPauseAgent(t.assigneeIds[0])}
-                              className="font-mono text-[9px] px-3 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
-                            >
-                              Pause Agent
-                            </button>
-                            <button
-                              onClick={() => onDeleteAgent(t.assigneeIds[0])}
-                              className="font-mono text-[9px] px-3 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
-                            >
-                              Delete Agent
-                            </button>
-                          </div>
                         </div>
                       )}
 
