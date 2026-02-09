@@ -37,6 +37,11 @@ export default function Home() {
   const markReadForAgent = useMutation(api.directMessages.markReadForAgent);
   const sendDm = useMutation(api.directMessages.send);
   const runWave = useMutation(api.waves.runWave);
+  const runs = (useQuery(api.runs.list, { limit: 20 }) || []) as any[];
+  const startRun = useMutation(api.runs.start);
+
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const runSteps = (useQuery(api.runSteps.byRun, { runId: (selectedRunId ?? undefined) as any }) || []) as any[];
 
   const [agentName, setAgentName] = useState("");
   const [mission, setMission] = useState("");
@@ -376,6 +381,62 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            <div className="pt-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40">Runs</p>
+                <button
+                  onClick={async () => {
+                    const title = prompt("Run title (feature request):");
+                    if (!title) return;
+                    const systemId = await ensureSystemAgentId();
+                    const res = await startRun({ workflowKey: "feature-dev", title, createdByAgentId: systemId } as any);
+                    setSelectedRunId(res.runId);
+                  }}
+                  className="border border-[#3A3A38]/20 hover:border-[#3A3A38]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-wider"
+                >
+                  +
+                </button>
+              </div>
+              <div className="space-y-2">
+                {runs.length === 0 && (
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">No runs</div>
+                )}
+                {runs.map((r) => (
+                  <button
+                    key={r._id}
+                    onClick={() => setSelectedRunId(r._id)}
+                    className={`w-full text-left border border-[#3A3A38]/10 bg-white px-2 py-2 ${
+                      selectedRunId === r._id ? "border-[#3A3A38]/40" : "hover:border-[#3A3A38]/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-medium text-[#1A3C2B] truncate">{r.title}</div>
+                      <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">{r.status}</div>
+                    </div>
+                    <div className="font-mono text-[9px] text-[#3A3A38]/40 mt-1">{r.workflowKey}</div>
+                  </button>
+                ))}
+              </div>
+
+              {selectedRunId && (
+                <div className="mt-3 border border-[#3A3A38]/10 bg-white">
+                  <div className="p-2 border-b border-[#3A3A38]/10 font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40">
+                    Run Steps
+                  </div>
+                  <div className="p-2 space-y-2">
+                    {runSteps.map((s) => (
+                      <div key={s._id} className="flex items-center justify-between text-[10px]">
+                        <div className="font-mono uppercase tracking-widest text-[#3A3A38]/60">
+                          {String(s.index + 1).padStart(2, "0")} / {s.stepKey}
+                        </div>
+                        <div className="font-mono uppercase tracking-widest text-[#3A3A38]/40">{s.status}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="p-5 border-t border-[#3A3A38]/20 font-mono text-[8px] text-[#3A3A38]/40 uppercase tracking-widest">
