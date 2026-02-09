@@ -36,7 +36,8 @@ export default defineSchema({
       v.literal("blocked")
     ),
     assigneeIds: v.array(v.id("agents")),
-    enabled: v.boolean(),
+    // Backwards-compatible: older rows may lack this field
+    enabled: v.optional(v.boolean()),
     schedule: v.optional(
       v.object({
         type: v.union(v.literal("once"), v.literal("cron")),

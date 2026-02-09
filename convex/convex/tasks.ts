@@ -60,6 +60,9 @@ export const toggleEnabled = mutation({
 
     const schedule = args.enabled ? task.schedule : undefined;
 
+    // If enabling an older task that lacks `enabled`, treat it as enabled from now on.
+    // (No-op for existing.)
+
     await ctx.db.patch(args.id, {
       enabled: args.enabled,
       schedule,
@@ -90,7 +93,7 @@ export const setSchedule = mutation({
     if (task.status !== "inbox") {
       throw new Error("Scheduling is only allowed for inbox tasks");
     }
-    if (!task.enabled) {
+    if (task.enabled === false) {
       throw new Error("Task must be enabled to schedule");
     }
 

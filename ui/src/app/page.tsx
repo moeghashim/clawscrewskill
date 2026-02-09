@@ -250,16 +250,16 @@ export default function Home() {
                       <div className="mt-2 space-y-2">
                         <div className="flex items-center justify-between">
                           <button
-                            onClick={() => onToggle(t, !t.enabled)}
+                            onClick={() => onToggle(t, !(t.enabled ?? true))}
                             className={`font-mono text-[9px] px-3 py-1.5 border uppercase tracking-wider ${
-                              t.enabled ? "border-[var(--forest)]" : "border-[#3A3A38]/20 opacity-60"
+                              (t.enabled ?? true) ? "border-[var(--forest)]" : "border-[#3A3A38]/20 opacity-60"
                             }`}
                           >
-                            {t.enabled ? "On" : "Off"}
+                            {(t.enabled ?? true) ? "On" : "Off"}
                           </button>
                           <div className="flex items-center gap-2">
                             <button
-                              disabled={!t.enabled}
+                              disabled={t.enabled === false}
                               onClick={() => openSchedule(t)}
                               className="font-mono text-[9px] px-3 py-1.5 border border-[#3A3A38]/20 uppercase tracking-wider disabled:opacity-40"
                             >
