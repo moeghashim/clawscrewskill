@@ -17,6 +17,7 @@ export const create = mutation({
       assigneeIds: args.assigneeIds ?? [],
       enabled: true,
       schedule: undefined,
+      waitingForTaskId: undefined,
     });
   },
 });

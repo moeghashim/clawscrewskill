@@ -46,6 +46,7 @@ export default defineSchema({
         jobId: v.optional(v.string()),
       })
     ),
+    waitingForTaskId: v.optional(v.id("tasks")),
     seed: v.optional(v.boolean()),
   }).index("by_status", ["status"]),
 

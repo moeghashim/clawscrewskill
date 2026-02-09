@@ -311,7 +311,17 @@ export default function Home() {
                   <div key={t._id} className="task-card bg-white border border-[#3A3A38]/10 p-3 border-l-2 border-l-[var(--forest)]">
                     <div className="flex justify-between items-start mb-1.5">
                       <span className="font-mono text-[9px] text-[#3A3A38]/40">{t._id.slice(0, 8)}</span>
-                      <span className="priority-badge font-mono bg-[#9EFFBF] text-[var(--forest)] uppercase">Normal</span>
+                      <span
+                        className={`priority-badge font-mono uppercase ${
+                          t.enabled === false
+                            ? "bg-[#3A3A38]/10 text-[#3A3A38]"
+                            : t.waitingForTaskId
+                              ? "bg-[var(--gold)] text-[var(--forest)]"
+                              : "bg-[#9EFFBF] text-[var(--forest)]"
+                        }`}
+                      >
+                        {t.enabled === false ? "Paused" : t.waitingForTaskId ? "Waiting" : "Running"}
+                      </span>
                     </div>
                     <div className="block">
                       <h3 className="font-header font-bold text-xs leading-tight mb-1">{t.title}</h3>
