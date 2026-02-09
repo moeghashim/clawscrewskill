@@ -31,7 +31,7 @@ export default function Home() {
 
   const unreadCounts = (useQuery(api.directMessages.unreadCounts) || {}) as Record<string, number>;
   const dmThread = (useQuery(api.directMessages.thread, {
-    agentId: selectedAgentId as any,
+    agentId: (selectedAgentId ?? undefined) as any,
     limit: 50,
   }) || []) as any[];
   const markReadForAgent = useMutation(api.directMessages.markReadForAgent);
