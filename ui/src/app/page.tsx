@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
 import { PauseIcon, PlayIcon, TrashIcon, BoltIcon } from "@heroicons/react/24/solid";
+import { useHumanAgent } from "@/lib/humanAgent";
 
 const columns = [
   { key: "inbox", label: "01 / Inbox" },
@@ -16,6 +17,7 @@ const columns = [
 export default function Home() {
   const tasks = (useQuery(api.tasks.list) || []) as any[];
   const agents = (useQuery(api.agents.list) || []) as any[];
+  const { human: humanAgent, ensureHuman } = useHumanAgent();
   const createTask = useMutation(api.tasks.create);
   const toggleEnabled = useMutation(api.tasks.toggleEnabled);
   const pauseTask = useMutation(api.tasks.pause);
@@ -33,6 +35,10 @@ export default function Home() {
   const dmThread = (useQuery(api.directMessages.thread, {
     agentId: (selectedAgentId ?? undefined) as any,
     limit: 50,
+  }) || []) as any[];
+  const humanThread = (useQuery(api.directMessages.thread, {
+    agentId: (humanAgent?._id ?? undefined) as any,
+    limit: 20,
   }) || []) as any[];
   const markReadForAgent = useMutation(api.directMessages.markReadForAgent);
   const sendDm = useMutation(api.directMessages.send);
@@ -519,6 +525,63 @@ export default function Home() {
                   )}
                 </div>
               )}
+
+              <div className="pt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40">
+                    Human Inbox
+                  </p>
+                  <button
+                    onClick={async () => {
+                      const humanId = await ensureHuman();
+                      await markReadForAgent({ agentId: humanId as any });
+                    }}
+                    className="border border-[#3A3A38]/20 hover:border-[#3A3A38]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-wider"
+                    title="Mark Human inbox read"
+                  >
+                    Mark read
+                  </button>
+                </div>
+
+                {!humanAgent ? (
+                  <button
+                    onClick={async () => {
+                      await ensureHuman();
+                    }}
+                    className="w-full border border-[#3A3A38]/20 hover:border-[#3A3A38]/50 px-2 py-2 font-mono text-[9px] uppercase tracking-wider"
+                  >
+                    Create Human agent
+                  </button>
+                ) : (
+                  <div className="border border-[#3A3A38]/10 bg-white">
+                    <div className="p-2 border-b border-[#3A3A38]/10 flex items-center justify-between">
+                      <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/50">
+                        Unread: <span className="text-[#3A3A38]">{unreadCounts[humanAgent._id] ?? 0}</span>
+                      </div>
+                      <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">
+                        {humanAgent.name}
+                      </div>
+                    </div>
+                    <div className="max-h-40 overflow-y-auto p-2 space-y-2">
+                      {humanThread.length === 0 ? (
+                        <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">
+                          No messages
+                        </div>
+                      ) : (
+                        humanThread.map((m) => (
+                          <div key={m._id} className="text-[10px]">
+                            <div className="font-mono text-[9px] text-[#3A3A38]/40">
+                              {agentsById.get(m.fromAgentId)?.name ?? m.fromAgentId.slice(0, 8)}
+                              {m.read ? "" : " (unread)"}
+                            </div>
+                            <div className="text-[#3A3A38] whitespace-pre-wrap">{m.content}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="p-5 border-t border-[#3A3A38]/20 font-mono text-[8px] text-[#3A3A38]/40 uppercase tracking-widest">
