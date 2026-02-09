@@ -198,17 +198,11 @@ async function install({ dryRun }) {
     process.env.CONVEX_DEPLOYMENT = convexEnv.CONVEX_DEPLOYMENT;
     if (convexEnv.CONVEX_URL) process.env.CONVEX_URL = convexEnv.CONVEX_URL;
 
-    // Seed
-    run("npx", ["convex", "run", "seed:seedData", "{}"], { cwd: convexDir });
+    // Seed (idempotent)
+    run("npx", ["convex", "run", "seed:seedIfEmpty", "{}"], { cwd: convexDir });
 
-    // Smoke query
-    run(
-      "npx",
-      ["convex", "run", "tasks:list", "{}"],
-      {
-        cwd: convexDir,
-      }
-    );
+    // Smoke check
+    run("npx", ["convex", "run", "health:smoke", "{}"], { cwd: convexDir });
 
     process.stdout.write("\nInstall complete.\n");
     if (deployedUrl) {

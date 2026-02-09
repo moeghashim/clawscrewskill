@@ -1,5 +1,56 @@
 import { mutation } from "./_generated/server";
 
+export const seedIfEmpty = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existingSeededTasks = await ctx.db.query("tasks").collect();
+    if (existingSeededTasks.some((t) => (t as any).seed)) {
+      return { ok: true, skipped: true };
+    }
+
+    const agentId = await ctx.db.insert("agents", {
+      name: "System",
+      role: "system",
+      status: "active",
+      sessionKey: "system",
+      seed: true,
+    });
+
+    const taskId = await ctx.db.insert("tasks", {
+      title: "Initialize Mission Control",
+      description: "Set up core dashboards and integrations.",
+      status: "in_progress",
+      assigneeIds: [agentId],
+      seed: true,
+    });
+
+    await ctx.db.insert("messages", {
+      taskId,
+      fromAgentId: agentId,
+      content: "Seeded comment: Mission Control initialized.",
+      attachments: [],
+      seed: true,
+    });
+
+    await ctx.db.insert("documents", {
+      title: "Mission Control Brief",
+      content: "Seeded document for layout and data flow.",
+      type: "protocol",
+      taskId,
+      seed: true,
+    });
+
+    await ctx.db.insert("activities", {
+      type: "seed",
+      agentId,
+      message: "Seed data created.",
+      seed: true,
+    });
+
+    return { ok: true, skipped: false };
+  },
+});
+
 export const seedData = mutation({
   args: {},
   handler: async (ctx) => {
