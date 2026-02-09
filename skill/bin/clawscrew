@@ -1,0 +1,117 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import path from "node:path";
+import readline from "node:readline";
+
+function usage() {
+  process.stdout.write(`clawscrew
+
+Usage:
+  clawscrew install [--dry-run]
+`);
+}
+
+function parseArgs(argv) {
+  const args = { _: [] };
+  for (const a of argv) {
+    if (a === "--dry-run") args.dryRun = true;
+    else args._.push(a);
+  }
+  return args;
+}
+
+function question(rl, prompt) {
+  return new Promise((resolve) => rl.question(prompt, (ans) => resolve(ans)));
+}
+
+function ensureDir(p) {
+  fs.mkdirSync(p, { recursive: true });
+}
+
+function writeEnvFile(filePath, kv) {
+  const lines = [];
+  for (const [k, v] of Object.entries(kv)) {
+    lines.push(`${k}=${v ?? ""}`);
+  }
+  lines.push("");
+  fs.writeFileSync(filePath, lines.join("\n"), "utf8");
+}
+
+async function install({ dryRun }) {
+  const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "..");
+  const uiEnvLocal = path.join(repoRoot, "ui", ".env.local");
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const vercelProject = (await question(rl, "Vercel project name (default: clawscrew): ")).trim() || "clawscrew";
+    const adminEmail = (await question(rl, "Admin email (for login gate): ")).trim();
+    const adminPassword = (await question(rl, "Admin password: ")).trim();
+    const convexUrl = (await question(rl, "Convex URL (optional for now): ")).trim();
+
+    const planned = {
+      repoRoot,
+      writeFiles: [uiEnvLocal],
+      vercel: {
+        project: vercelProject,
+        envVars: {
+          NEXT_PUBLIC_CONVEX_URL: convexUrl || "<set after Convex setup>",
+          ADMIN_EMAIL: adminEmail || "<required>",
+          ADMIN_PASSWORD: adminPassword ? "<provided>" : "<required>",
+        },
+        rootDir: "ui",
+      },
+    };
+
+    process.stdout.write("\nPlanned install actions:\n");
+    process.stdout.write(JSON.stringify(planned, null, 2) + "\n\n");
+
+    if (dryRun) {
+      process.stdout.write("Dry run: no changes written.\n");
+      return;
+    }
+
+    if (!adminEmail || !adminPassword) {
+      process.stderr.write("ERROR: Admin email and password are required.\n");
+      process.exitCode = 1;
+      return;
+    }
+
+    ensureDir(path.dirname(uiEnvLocal));
+    writeEnvFile(uiEnvLocal, {
+      NEXT_PUBLIC_CONVEX_URL: convexUrl,
+      ADMIN_EMAIL: adminEmail,
+      ADMIN_PASSWORD: adminPassword,
+      BETTER_AUTH_URL: "http://localhost:3000",
+      BETTER_AUTH_SECRET: "",
+    });
+
+    process.stdout.write(`Wrote ${uiEnvLocal}\n\n`);
+    process.stdout.write("Next steps (manual in A1):\n");
+    process.stdout.write("- Convex: create or select a deployment, then set NEXT_PUBLIC_CONVEX_URL in Vercel + ui/.env.local\n");
+    process.stdout.write("- Vercel: link repo, set Root Directory=ui, set ADMIN_EMAIL/ADMIN_PASSWORD, deploy\n");
+  } finally {
+    rl.close();
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const cmd = args._[0];
+  if (!cmd) {
+    usage();
+    process.exit(1);
+  }
+  if (cmd === "install") {
+    await install({ dryRun: !!args.dryRun });
+    return;
+  }
+
+  usage();
+  process.exit(1);
+}
+
+main().catch((err) => {
+  process.stderr.write(String(err?.stack || err) + "\n");
+  process.exit(1);
+});
