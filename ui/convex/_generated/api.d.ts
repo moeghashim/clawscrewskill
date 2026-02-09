@@ -24,6 +24,7 @@ import type * as seed from "../seed.js";
 import type * as tasks from "../tasks.js";
 import type * as waves from "../waves.js";
 import type * as workflowSeeds from "../workflowSeeds.js";
+import type * as workflowWaves from "../workflowWaves.js";
 import type * as workflows from "../workflows.js";
 
 import type {
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   tasks: typeof tasks;
   waves: typeof waves;
   workflowSeeds: typeof workflowSeeds;
+  workflowWaves: typeof workflowWaves;
   workflows: typeof workflows;
 }>;
 
