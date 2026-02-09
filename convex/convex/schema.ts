@@ -46,7 +46,14 @@ export default defineSchema({
         jobId: v.optional(v.string()),
       })
     ),
+    // Dependencies (Claude/pi-messenger style)
+    dependsOnTaskIds: v.optional(v.array(v.id("tasks"))),
+    // Optional single dependency for backwards compatibility
     waitingForTaskId: v.optional(v.id("tasks")),
+
+    // Claiming / wave execution
+    claimedByAgentId: v.optional(v.id("agents")),
+    claimedAt: v.optional(v.number()),
     seed: v.optional(v.boolean()),
   }).index("by_status", ["status"]),
 

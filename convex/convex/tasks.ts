@@ -18,6 +18,9 @@ export const create = mutation({
       enabled: true,
       schedule: undefined,
       waitingForTaskId: undefined,
+      dependsOnTaskIds: [],
+      claimedByAgentId: undefined,
+      claimedAt: undefined,
     });
   },
 });
