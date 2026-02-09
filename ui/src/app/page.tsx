@@ -167,11 +167,15 @@ export default function Home() {
     await clearSchedule({ id: task._id });
   };
 
-  const inboxTasks = tasks.filter((t) => t.status === "inbox");
-  const assignedTasks = tasks.filter((t) => t.status === "assigned");
-  const activeTasks = tasks.filter((t) => t.status === "in_progress");
-  const reviewTasks = tasks.filter((t) => t.status === "review");
-  const doneTasks = tasks.filter((t) => t.status === "done");
+  const visibleTasks = selectedAgentId
+    ? tasks.filter((t) => t.assigneeIds?.includes(selectedAgentId))
+    : tasks;
+
+  const inboxTasks = visibleTasks.filter((t) => t.status === "inbox");
+  const assignedTasks = visibleTasks.filter((t) => t.status === "assigned");
+  const activeTasks = visibleTasks.filter((t) => t.status === "in_progress");
+  const reviewTasks = visibleTasks.filter((t) => t.status === "review");
+  const doneTasks = visibleTasks.filter((t) => t.status === "done");
 
   const columnsData = {
     inbox: inboxTasks,
@@ -201,6 +205,7 @@ export default function Home() {
     const agent = agentsById.get(agentId);
     if (!confirm(`Delete agent "${agent?.name ?? agentId}" and ALL related tasks?`)) return;
     await deleteAgent({ agentId: agentId as any });
+    if (selectedAgentId === agentId) setSelectedAgentId(null);
   };
 
   return (
@@ -267,6 +272,23 @@ export default function Home() {
                       </span>
                       <span className="font-mono text-[9px] opacity-40">[{tasks.filter((t) => t.assigneeIds?.includes(a._id)).length}]</span>
                     </button>
+
+                    {selectedAgentId === a._id && (
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          onClick={() => onPauseAgent(a._id)}
+                          className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                        >
+                          Pause
+                        </button>
+                        <button
+                          onClick={() => onDeleteAgent(a._id)}
+                          className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
