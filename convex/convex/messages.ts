@@ -19,11 +19,12 @@ export const create = mutation({
 });
 
 export const byTask = query({
-  args: { taskId: v.id("tasks") },
+  args: { taskId: v.optional(v.id("tasks")) },
   handler: async (ctx, args) => {
+    if (!args.taskId) return [];
     return await ctx.db
       .query("messages")
-      .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
+      .withIndex("by_task", (q) => q.eq("taskId", args.taskId!))
       .collect();
   },
 });
