@@ -8,6 +8,15 @@ export default defineSchema({
     status: v.union(v.literal("idle"), v.literal("active"), v.literal("blocked")),
     currentTaskId: v.optional(v.id("tasks")),
     sessionKey: v.string(),
+
+    // Mission-agent metadata (used by OpenClaw)
+    mission: v.optional(v.string()),
+    soul: v.optional(v.string()),
+    // Optional operational hints
+    model: v.optional(v.string()),
+    thinking: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    timezone: v.optional(v.string()),
+
     seed: v.optional(v.boolean()),
   }).index("by_sessionKey", ["sessionKey"]),
 

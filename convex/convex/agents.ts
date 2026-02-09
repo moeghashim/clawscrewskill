@@ -7,6 +7,12 @@ export const upsert = mutation({
     role: v.string(),
     sessionKey: v.string(),
     status: v.optional(v.union(v.literal("idle"), v.literal("active"), v.literal("blocked"))),
+
+    mission: v.optional(v.string()),
+    soul: v.optional(v.string()),
+    model: v.optional(v.string()),
+    thinking: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    timezone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -19,6 +25,11 @@ export const upsert = mutation({
         name: args.name,
         role: args.role,
         status: args.status ?? existing.status,
+        mission: args.mission ?? existing.mission,
+        soul: args.soul ?? existing.soul,
+        model: args.model ?? existing.model,
+        thinking: args.thinking ?? existing.thinking,
+        timezone: args.timezone ?? existing.timezone,
       });
       return existing._id;
     }
@@ -29,6 +40,11 @@ export const upsert = mutation({
       sessionKey: args.sessionKey,
       status: args.status ?? "idle",
       currentTaskId: undefined,
+      mission: args.mission,
+      soul: args.soul,
+      model: args.model,
+      thinking: args.thinking,
+      timezone: args.timezone,
     });
   },
 });

@@ -3,7 +3,6 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/lib/convex";
 import { useState } from "react";
-import Link from "next/link";
 
 const columns = [
   { key: "inbox", label: "01 / Inbox" },
@@ -19,9 +18,11 @@ export default function Home() {
   const toggleEnabled = useMutation(api.tasks.toggleEnabled);
   const setSchedule = useMutation(api.tasks.setSchedule);
   const clearSchedule = useMutation(api.tasks.clearSchedule);
+  const upsertAgent = useMutation(api.agents.upsert);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [agentName, setAgentName] = useState("");
+  const [mission, setMission] = useState("");
+  const [soul, setSoul] = useState("");
   const [newMissionOpen, setNewMissionOpen] = useState(false);
 
   const [scheduleTaskId, setScheduleTaskId] = useState<string | null>(null);
@@ -30,12 +31,40 @@ export default function Home() {
   const [cron, setCron] = useState("");
   const [cronError, setCronError] = useState<string | null>(null);
 
+  const slug = (s: string) =>
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title) return;
-    await createTask({ title, description });
-    setTitle("");
-    setDescription("");
+    if (!agentName || !mission || !soul) return;
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const sessionKey = `agent:${slug(agentName)}:${Date.now()}`;
+
+    const agentId = await upsertAgent({
+      name: agentName,
+      role: "agent",
+      sessionKey,
+      status: "idle",
+      mission,
+      soul,
+      timezone,
+      thinking: "low",
+    } as any);
+
+    await createTask({
+      title: mission,
+      description: `Agent: ${agentName}`,
+      assigneeIds: [agentId],
+    } as any);
+
+    setAgentName("");
+    setMission("");
+    setSoul("");
     setNewMissionOpen(false);
   };
 
@@ -258,15 +287,24 @@ export default function Home() {
             <form onSubmit={onCreate} className="mt-4 space-y-3">
               <input
                 className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
-                placeholder="Task title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Agent name"
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value)}
+                required
               />
               <input
                 className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Mission"
+                value={mission}
+                onChange={(e) => setMission(e.target.value)}
+                required
+              />
+              <textarea
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm min-h-[140px]"
+                placeholder="Soul (persona/instructions for OpenClaw)"
+                value={soul}
+                onChange={(e) => setSoul(e.target.value)}
+                required
               />
               <div className="flex gap-2">
                 <button
