@@ -84,4 +84,15 @@ export default defineSchema({
     delivered: v.boolean(),
     seed: v.optional(v.boolean()),
   }).index("by_agent_delivered", ["mentionedAgentId", "delivered"]),
+
+  directMessages: defineTable({
+    toAgentId: v.id("agents"),
+    fromAgentId: v.id("agents"),
+    content: v.string(),
+    taskId: v.optional(v.id("tasks")),
+    read: v.boolean(),
+    seed: v.optional(v.boolean()),
+  })
+    .index("by_to_read", ["toAgentId", "read"])
+    .index("by_to", ["toAgentId"]),
 });
