@@ -1,4 +1,5 @@
 import { mutation } from "./_generated/server";
+import { api } from "./_generated/api";
 
 export const seedIfEmpty = mutation({
   args: {},
@@ -7,6 +8,9 @@ export const seedIfEmpty = mutation({
     if (existingSeededMissions.some((m) => (m as any).seed)) {
       return { ok: true, skipped: true };
     }
+
+    // Seed core workflows
+    await ctx.runMutation(api.workflowSeeds.seedWorkflows, {});
 
     const missionId = await ctx.db.insert("missions", {
       name: "Demo Mission",
@@ -65,6 +69,9 @@ export const seedIfEmpty = mutation({
 export const seedData = mutation({
   args: {},
   handler: async (ctx) => {
+    // Seed core workflows
+    await ctx.runMutation(api.workflowSeeds.seedWorkflows, {});
+
     const missionId = await ctx.db.insert("missions", {
       name: "Demo Mission",
       objective: "Set up and validate ClawsCrew Mission Control.",
