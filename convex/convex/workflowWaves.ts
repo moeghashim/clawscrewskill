@@ -81,7 +81,8 @@ export const runWave = mutation({
       let taskId = step.taskId;
       if (!taskId) {
         taskId = await ctx.db.insert("tasks", {
-          title: `${run.title} / ${step.stepKey}`,
+          missionId: run.missionId,
+          title: `${run.title} / ${step.stepKey}`, 
           description: `Workflow: ${run.workflowKey}`,
           status: "inbox",
           assigneeIds: step.assignedAgentId ? [step.assignedAgentId] : [],

@@ -65,6 +65,7 @@ export const get = query({
 
 export const start = mutation({
   args: {
+    missionId: v.id("missions"),
     workflowKey: v.string(),
     title: v.string(),
     createdByAgentId: v.optional(v.id("agents")),
@@ -111,6 +112,7 @@ export const start = mutation({
     }
 
     const runId = await ctx.db.insert("runs", {
+      missionId: args.missionId,
       workflowKey: args.workflowKey,
       title: args.title,
       status: "running",
@@ -144,6 +146,7 @@ export const start = mutation({
     // Create first task for step 0
     const first = parsed.steps[0];
     const taskId = await ctx.db.insert("tasks", {
+      missionId: args.missionId,
       title: `${args.title} / ${first.id}`,
       description: `Workflow: ${parsed.key} (v${parsed.version})`,
       status: "inbox",
@@ -174,12 +177,14 @@ export const start = mutation({
 // Backward-compatible minimal create
 export const create = mutation({
   args: {
+    missionId: v.id("missions"),
     workflowKey: v.string(),
     title: v.string(),
     createdByAgentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("runs", {
+      missionId: args.missionId,
       workflowKey: args.workflowKey,
       title: args.title,
       status: "running",

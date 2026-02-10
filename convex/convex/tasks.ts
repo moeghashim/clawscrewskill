@@ -5,12 +5,14 @@ import cronParser from "cron-parser";
 
 export const create = mutation({
   args: {
+    missionId: v.id("missions"),
     title: v.string(),
     description: v.string(),
     assigneeIds: v.optional(v.array(v.id("agents"))),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("tasks", {
+      missionId: args.missionId,
       title: args.title,
       description: args.description,
       status: "inbox",

@@ -100,7 +100,8 @@ export const submitStepResult = mutation({
       let nextTaskId = next.taskId;
       if (!nextTaskId) {
         nextTaskId = await ctx.db.insert("tasks", {
-          title: `${run.title} / ${next.stepKey}`,
+          missionId: run.missionId,
+          title: `${run.title} / ${next.stepKey}`, 
           description: `Workflow: ${run.workflowKey}`,
           status: "inbox",
           assigneeIds: next.assignedAgentId ? [next.assignedAgentId] : [],

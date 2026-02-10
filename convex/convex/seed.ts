@@ -3,10 +3,20 @@ import { mutation } from "./_generated/server";
 export const seedIfEmpty = mutation({
   args: {},
   handler: async (ctx) => {
-    const existingSeededTasks = await ctx.db.query("tasks").collect();
-    if (existingSeededTasks.some((t) => (t as any).seed)) {
+    const existingSeededMissions = await ctx.db.query("missions").collect();
+    if (existingSeededMissions.some((m) => (m as any).seed)) {
       return { ok: true, skipped: true };
     }
+
+    const missionId = await ctx.db.insert("missions", {
+      name: "Demo Mission",
+      objective: "Set up and validate ClawsCrew Mission Control.",
+      constraints: "Keep it simple.",
+      toolsAllowed: [],
+      soul: "System seed mission",
+      intakeStatus: "complete",
+      seed: true,
+    });
 
     const agentId = await ctx.db.insert("agents", {
       name: "System",
@@ -17,6 +27,7 @@ export const seedIfEmpty = mutation({
     });
 
     const taskId = await ctx.db.insert("tasks", {
+      missionId,
       title: "Initialize Mission Control",
       description: "Set up core dashboards and integrations.",
       status: "in_progress",
@@ -54,6 +65,16 @@ export const seedIfEmpty = mutation({
 export const seedData = mutation({
   args: {},
   handler: async (ctx) => {
+    const missionId = await ctx.db.insert("missions", {
+      name: "Demo Mission",
+      objective: "Set up and validate ClawsCrew Mission Control.",
+      constraints: "Keep it simple.",
+      toolsAllowed: [],
+      soul: "System seed mission",
+      intakeStatus: "complete",
+      seed: true,
+    });
+
     const agentId = await ctx.db.insert("agents", {
       name: "System",
       role: "system",
@@ -63,6 +84,7 @@ export const seedData = mutation({
     });
 
     const taskId = await ctx.db.insert("tasks", {
+      missionId,
       title: "Initialize Mission Control",
       description: "Set up core dashboards and integrations.",
       status: "in_progress",
@@ -100,7 +122,7 @@ export const seedData = mutation({
 export const clearSeed = mutation({
   args: {},
   handler: async (ctx) => {
-    const tables = ["messages", "documents", "tasks", "activities", "notifications", "agents"] as const;
+    const tables = ["messages", "documents", "tasks", "activities", "notifications", "agents", "missions"] as const;
 
     for (const table of tables) {
       const records = await ctx.db.query(table).collect();

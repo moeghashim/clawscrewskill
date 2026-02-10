@@ -2,6 +2,21 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  missions: defineTable({
+    name: v.string(),
+    // The mission represents a long-lived team/department with a single primary agent.
+    primaryAgentId: v.optional(v.id("agents")),
+
+    objective: v.optional(v.string()),
+    constraints: v.optional(v.string()),
+    toolsAllowed: v.optional(v.array(v.string())),
+    soul: v.optional(v.string()),
+
+    intakeStatus: v.union(v.literal("needs_intake"), v.literal("complete")),
+
+    seed: v.optional(v.boolean()),
+  }).index("by_intakeStatus", ["intakeStatus"]),
+
   agents: defineTable({
     name: v.string(),
     role: v.string(),
@@ -9,9 +24,9 @@ export default defineSchema({
     currentTaskId: v.optional(v.id("tasks")),
     sessionKey: v.string(),
 
-    // Mission-agent metadata (used by OpenClaw)
-    mission: v.optional(v.string()),
-    soul: v.optional(v.string()),
+    // Agents can optionally be attached to a mission (primary agent). Runner/system agents are global.
+    missionId: v.optional(v.id("missions")),
+
     // Optional operational hints
     model: v.optional(v.string()),
     thinking: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
@@ -25,6 +40,8 @@ export default defineSchema({
   }).index("by_sessionKey", ["sessionKey"]),
 
   tasks: defineTable({
+    missionId: v.id("missions"),
+
     title: v.string(),
     description: v.string(),
     status: v.union(
@@ -36,7 +53,6 @@ export default defineSchema({
       v.literal("blocked")
     ),
     assigneeIds: v.array(v.id("agents")),
-    // Backwards-compatible: older rows may lack this field
     enabled: v.optional(v.boolean()),
     schedule: v.optional(
       v.object({
@@ -46,14 +62,15 @@ export default defineSchema({
         jobId: v.optional(v.string()),
       })
     ),
-    // Dependencies (Claude/pi-messenger style)
+
+    // Dependencies
     dependsOnTaskIds: v.optional(v.array(v.id("tasks"))),
-    // Optional single dependency for backwards compatibility
     waitingForTaskId: v.optional(v.id("tasks")),
 
     // Claiming / wave execution
     claimedByAgentId: v.optional(v.id("agents")),
     claimedAt: v.optional(v.number()),
+
     seed: v.optional(v.boolean()),
   }).index("by_status", ["status"]),
 
@@ -72,9 +89,13 @@ export default defineSchema({
       v.literal("deliverable"),
       v.literal("research"),
       v.literal("protocol"),
+      v.literal("system_memory"),
+      v.literal("mission_memory"),
+      v.literal("intake"),
       v.literal("other")
     ),
     taskId: v.optional(v.id("tasks")),
+    missionId: v.optional(v.id("missions")),
     seed: v.optional(v.boolean()),
   }),
 
@@ -113,15 +134,10 @@ export default defineSchema({
   }).index("by_key", ["key"]),
 
   runs: defineTable({
+    missionId: v.id("missions"),
     workflowKey: v.string(),
     title: v.string(),
-    status: v.union(
-      v.literal("running"),
-      v.literal("blocked"),
-      v.literal("needs_human"),
-      v.literal("done"),
-      v.literal("canceled")
-    ),
+    status: v.union(v.literal("running"), v.literal("needs_human"), v.literal("done"), v.literal("canceled")),
     currentStepIndex: v.number(),
     createdByAgentId: v.optional(v.id("agents")),
     startedAt: v.optional(v.number()),
@@ -140,14 +156,7 @@ export default defineSchema({
       v.literal("tester"),
       v.literal("reviewer")
     ),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("running"),
-      v.literal("passed"),
-      v.literal("failed"),
-      v.literal("blocked"),
-      v.literal("needs_human")
-    ),
+    status: v.union(v.literal("pending"), v.literal("running"), v.literal("passed"), v.literal("failed"), v.literal("needs_human")),
     retriesUsed: v.number(),
     retryLimit: v.number(),
     gateJsonSchema: v.optional(v.string()),

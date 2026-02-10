@@ -16,6 +16,7 @@ import type * as documents from "../documents.js";
 import type * as feed from "../feed.js";
 import type * as health from "../health.js";
 import type * as messages from "../messages.js";
+import type * as missions from "../missions.js";
 import type * as notifications from "../notifications.js";
 import type * as runEngine from "../runEngine.js";
 import type * as runSteps from "../runSteps.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   feed: typeof feed;
   health: typeof health;
   messages: typeof messages;
+  missions: typeof missions;
   notifications: typeof notifications;
   runEngine: typeof runEngine;
   runSteps: typeof runSteps;
