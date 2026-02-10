@@ -344,14 +344,43 @@ export default function Home() {
               </ul>
 
               {selectedMissionId && (
-                <div className="mt-3 space-y-2">
-                  <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">Primary agent</div>
-                  <div className="border border-[#3A3A38]/10 bg-white px-2 py-2">
-                    <div className="text-[12px] text-[#3A3A38]">
-                      {agentsById.get(selectedAgentId ?? "")?.name ?? "(none)"}
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">Primary agent</div>
+                    <div className="border border-[#3A3A38]/10 bg-white px-2 py-2">
+                      <div className="text-[12px] text-[#3A3A38]">
+                        {agentsById.get(selectedAgentId ?? "")?.name ?? "(none)"}
+                      </div>
+                      <div className="font-mono text-[9px] text-[#3A3A38]/40 mt-1">
+                        Intake: {missions.find((x) => x._id === selectedMissionId)?.intakeStatus}
+                      </div>
                     </div>
-                    <div className="font-mono text-[9px] text-[#3A3A38]/40 mt-1">
-                      Intake: {missions.find((x) => x._id === selectedMissionId)?.intakeStatus}
+                  </div>
+
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">Runners (system)</div>
+                    <div className="border border-[#3A3A38]/10 bg-white">
+                      {agents
+                        .filter((a) => ["planner", "dev", "verifier", "tester", "reviewer"].includes(a.role))
+                        .map((a) => (
+                          <button
+                            key={a._id}
+                            onClick={() => setSelectedAgentId(a._id)}
+                            className={`w-full px-2 py-1 text-left text-[11px] flex items-center justify-between border-b border-[#3A3A38]/10 last:border-b-0 ${
+                              selectedAgentId === a._id ? "bg-[var(--forest)]/5" : "hover:bg-[#3A3A38]/[0.03]"
+                            }`}
+                            title={`Runner: ${a.role}`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span className={`w-1 h-1 rounded-full ${a.status === "blocked" ? "bg-[var(--coral)]" : "bg-[var(--forest)]"}`}></span>
+                              {a.name}
+                            </span>
+                            <span className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">{a.role}</span>
+                          </button>
+                        ))}
+                      {agents.filter((a) => ["planner", "dev", "verifier", "tester", "reviewer"].includes(a.role)).length === 0 && (
+                        <div className="p-2 font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">No runners yet</div>
+                      )}
                     </div>
                   </div>
                 </div>
