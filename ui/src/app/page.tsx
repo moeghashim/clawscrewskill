@@ -15,9 +15,12 @@ const columns = [
 ];
 
 export default function Home() {
+  const missions = (useQuery(api.missions.list) || []) as any[];
   const tasks = (useQuery(api.tasks.list) || []) as any[];
   const agents = (useQuery(api.agents.list) || []) as any[];
   const { human: humanAgent, ensureHuman } = useHumanAgent();
+  const createMission = useMutation(api.missions.create);
+  const updateMission = useMutation(api.missions.update);
   const createTask = useMutation(api.tasks.create);
   const toggleEnabled = useMutation(api.tasks.toggleEnabled);
   const pauseTask = useMutation(api.tasks.pause);
@@ -28,6 +31,7 @@ export default function Home() {
   const pauseAgent = useMutation(api.agents.pause);
   const deleteAgent = useMutation(api.agents.remove);
 
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [dmDraft, setDmDraft] = useState("");
 
@@ -44,6 +48,7 @@ export default function Home() {
   const sendDm = useMutation(api.directMessages.send);
   const runWave = useMutation(api.workflowWaves.runWave);
   const runs = (useQuery(api.runs.list, { limit: 20 }) || []) as any[];
+  const visibleRuns = selectedMissionId ? runs.filter((r) => r.missionId === selectedMissionId) : runs;
   const startRun = useMutation(api.runs.start);
 
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -57,8 +62,9 @@ export default function Home() {
   const createMessage = useMutation(api.messages.create);
   const [gateJsonDraft, setGateJsonDraft] = useState("{");
 
+  const [missionName, setMissionName] = useState("");
   const [agentName, setAgentName] = useState("");
-  const [mission, setMission] = useState("");
+  const [missionObjective, setMissionObjective] = useState("");
   const [soul, setSoul] = useState("");
   const [agentModel, setAgentModel] = useState("");
   const [toolsAllowed, setToolsAllowed] = useState("");
@@ -83,17 +89,28 @@ export default function Home() {
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agentName || !mission || !soul) return;
+    if (!missionName || !agentName || !soul) return;
+
+    const missionId = await createMission({
+      name: missionName,
+      objective: missionObjective || undefined,
+      constraints: constraints || undefined,
+      toolsAllowed: toolsAllowed
+        ? toolsAllowed
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
+      soul,
+    } as any);
 
     const sessionKey = `agent:${slug(agentName)}:${Date.now()}`;
-
     const agentId = await upsertAgent({
       name: agentName,
       role: "agent",
       sessionKey,
       status: "idle",
-      mission,
-      soul,
+      missionId,
       model: agentModel || undefined,
       thinking: "low",
       toolsAllowed: toolsAllowed
@@ -106,25 +123,14 @@ export default function Home() {
       repoPath: repoPath || undefined,
     } as any);
 
-    const taskId = await createTask({
-      title: mission,
-      description: `Agent: ${agentName}`,
-      assigneeIds: [agentId],
-    } as any);
+    await updateMission({ id: missionId as any, primaryAgentId: agentId as any } as any);
 
-    if (missionCron.trim()) {
-      const parts = missionCron.trim().split(/\s+/);
-      if (parts.length < 5) {
-        throw new Error("Mission schedule cron must have 5 fields");
-      }
-      await setSchedule({
-        id: taskId,
-        schedule: { type: "cron", cron: missionCron.trim() },
-      } as any);
-    }
+    setSelectedMissionId(missionId);
+    setSelectedAgentId(agentId);
 
+    setMissionName("");
+    setMissionObjective("");
     setAgentName("");
-    setMission("");
     setSoul("");
     setAgentModel("");
     setToolsAllowed("");
@@ -198,9 +204,9 @@ export default function Home() {
     await clearSchedule({ id: task._id });
   };
 
-  const visibleTasks = selectedAgentId
-    ? tasks.filter((t) => t.assigneeIds?.includes(selectedAgentId))
-    : tasks;
+  const visibleTasks = tasks
+    .filter((t) => (selectedMissionId ? t.missionId === selectedMissionId : true))
+    .filter((t) => (selectedAgentId ? t.assigneeIds?.includes(selectedAgentId) : true));
 
   const inboxTasks = visibleTasks.filter((t) => t.status === "inbox");
   const assignedTasks = visibleTasks.filter((t) => t.status === "assigned");
@@ -297,104 +303,59 @@ export default function Home() {
         <aside className="w-52 border-r border-[var(--grid)] flex flex-col bg-[var(--paper)] min-h-0">
           <div className="p-5 space-y-8 flex-1 overflow-y-auto min-h-0">
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40 mb-4">Agents</p>
+              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40 mb-4">Missions</p>
               <ul className="space-y-2">
                 <li>
                   <button
-                    onClick={() => setSelectedAgentId(null)}
+                    onClick={() => {
+                      setSelectedMissionId(null);
+                      setSelectedAgentId(null);
+                    }}
                     className={`w-full text-left flex items-center justify-between text-[12px] ${
-                      selectedAgentId === null ? "font-medium text-[var(--forest)]" : "text-[#3A3A38]/60"
+                      selectedMissionId === null ? "font-medium text-[var(--forest)]" : "text-[#3A3A38]/60"
                     }`}
                   >
                     <span className="flex items-center gap-2">
                       <span className="w-1 h-1 bg-[var(--forest)] rounded-full"></span>
-                      All Tasks
+                      All Missions
                     </span>
-                    <span className="font-mono text-[9px] opacity-40">[{tasks.length}]</span>
+                    <span className="font-mono text-[9px] opacity-40">[{missions.length}]</span>
                   </button>
                 </li>
-                {agents.map((a) => (
-                  <li key={a._id}>
+                {missions.map((m) => (
+                  <li key={m._id}>
                     <button
-                      onClick={async () => {
-                        setSelectedAgentId(a._id);
-                        await markReadForAgent({ agentId: a._id as any });
+                      onClick={() => {
+                        setSelectedMissionId(m._id);
+                        setSelectedAgentId(m.primaryAgentId ?? null);
                       }}
                       className={`w-full text-left flex items-center justify-between text-[12px] ${
-                        selectedAgentId === a._id ? "font-medium text-[var(--forest)]" : "text-[#3A3A38]/60"
+                        selectedMissionId === m._id ? "font-medium text-[var(--forest)]" : "text-[#3A3A38]/60"
                       }`}
                     >
                       <span className="flex items-center gap-2">
-                        <span className={`w-1 h-1 rounded-full ${a.status === "blocked" ? "bg-[var(--coral)]" : "bg-[var(--forest)]"}`}></span>
-                        {a.name}
+                        <span className={`w-1 h-1 rounded-full ${m.intakeStatus === "complete" ? "bg-[var(--forest)]" : "bg-[var(--gold)]"}`}></span>
+                        {m.name}
                       </span>
-                      <span className="flex items-center gap-2">
-                        {unreadCounts[a._id] ? (
-                          <span className="font-mono text-[9px] px-1.5 py-0.5 border border-[#3A3A38]/20 bg-white">
-                            {unreadCounts[a._id]}
-                          </span>
-                        ) : null}
-                        <span className="font-mono text-[9px] opacity-40">[{tasks.filter((t) => t.assigneeIds?.includes(a._id)).length}]</span>
-                      </span>
+                      <span className="font-mono text-[9px] opacity-40">[{tasks.filter((t) => t.missionId === m._id).length}]</span>
                     </button>
-
-                    {selectedAgentId === a._id && (
-                      <div className="mt-2 space-y-2">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => onPauseAgent(a._id)}
-                            className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
-                          >
-                            Pause
-                          </button>
-                          <button
-                            onClick={() => onDeleteAgent(a._id)}
-                            className="font-mono text-[9px] px-2 py-1 border border-[#3A3A38]/20 uppercase tracking-wider"
-                          >
-                            Delete
-                          </button>
-                        </div>
-
-                        <div className="border border-[#3A3A38]/10 bg-white">
-                          <div className="p-2 border-b border-[#3A3A38]/10 font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/40">
-                            Mailbox
-                          </div>
-                          <div className="max-h-40 overflow-y-auto p-2 space-y-2">
-                            {dmThread.length === 0 && (
-                              <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">
-                                No messages
-                              </div>
-                            )}
-                            {dmThread.map((m) => (
-                              <div key={m._id} className="text-[10px]">
-                                <div className="font-mono text-[9px] text-[#3A3A38]/40">
-                                  {agentsById.get(m.fromAgentId)?.name ?? m.fromAgentId.slice(0, 8)}
-                                  {m.read ? "" : " (unread)"}
-                                </div>
-                                <div className="text-[#3A3A38]">{m.content}</div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="p-2 border-t border-[#3A3A38]/10 flex gap-2">
-                            <input
-                              className="flex-1 border border-[#3A3A38]/20 px-2 py-1 text-[10px]"
-                              placeholder="Message…"
-                              value={dmDraft}
-                              onChange={(e) => setDmDraft(e.target.value)}
-                            />
-                            <button
-                              onClick={onSendDm}
-                              className="border border-[#3A3A38]/20 px-2 py-1 text-[10px] font-mono uppercase tracking-wider"
-                            >
-                              Send
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </li>
                 ))}
               </ul>
+
+              {selectedMissionId && (
+                <div className="mt-3 space-y-2">
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">Primary agent</div>
+                  <div className="border border-[#3A3A38]/10 bg-white px-2 py-2">
+                    <div className="text-[12px] text-[#3A3A38]">
+                      {agentsById.get(selectedAgentId ?? "")?.name ?? "(none)"}
+                    </div>
+                    <div className="font-mono text-[9px] text-[#3A3A38]/40 mt-1">
+                      Intake: {missions.find((x) => x._id === selectedMissionId)?.intakeStatus}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-6">
@@ -404,8 +365,12 @@ export default function Home() {
                   onClick={async () => {
                     const title = prompt("Run title (feature request):");
                     if (!title) return;
+                    if (!selectedMissionId) {
+                      alert("Select a mission first.");
+                      return;
+                    }
                     const systemId = await ensureSystemAgentId();
-                    const res = await startRun({ workflowKey: "feature-dev", title, createdByAgentId: systemId } as any);
+                    const res = await startRun({ missionId: selectedMissionId as any, workflowKey: "feature-dev", title, createdByAgentId: systemId } as any);
                     setSelectedRunId(res.runId);
                   }}
                   className="border border-[#3A3A38]/20 hover:border-[#3A3A38]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-wider"
@@ -414,10 +379,10 @@ export default function Home() {
                 </button>
               </div>
               <div className="space-y-2">
-                {runs.length === 0 && (
+                {visibleRuns.length === 0 && (
                   <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40">No runs</div>
                 )}
-                {runs.map((r) => (
+                {visibleRuns.map((r) => (
                   <button
                     key={r._id}
                     onClick={() => {
@@ -743,17 +708,23 @@ export default function Home() {
             <form onSubmit={onCreateWithErrorHandling} className="mt-4 space-y-3">
               <input
                 className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
-                placeholder="Agent name"
-                value={agentName}
-                onChange={(e) => setAgentName(e.target.value)}
+                placeholder="Mission name (e.g. SEO Department)"
+                value={missionName}
+                onChange={(e) => setMissionName(e.target.value)}
                 required
               />
               <input
                 className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
-                placeholder="Mission"
-                value={mission}
-                onChange={(e) => setMission(e.target.value)}
+                placeholder="Primary agent name (e.g. Teddy)"
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value)}
                 required
+              />
+              <textarea
+                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm min-h-[80px]"
+                placeholder="Objective (what this mission/team is responsible for)"
+                value={missionObjective}
+                onChange={(e) => setMissionObjective(e.target.value)}
               />
               <textarea
                 className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm min-h-[140px]"
@@ -786,12 +757,7 @@ export default function Home() {
                 value={constraints}
                 onChange={(e) => setConstraints(e.target.value)}
               />
-              <input
-                className="w-full border border-[#3A3A38]/20 px-4 py-3 text-sm"
-                placeholder="Mission schedule cron (optional, e.g. 0 9 * * 1)"
-                value={missionCron}
-                onChange={(e) => setMissionCron(e.target.value)}
-              />
+              {/* Mission itself is not schedulable; schedule individual tasks inside the mission. */}
               <div className="flex gap-2">
                 <button
                   type="submit"
