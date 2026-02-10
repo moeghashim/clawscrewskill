@@ -96,6 +96,13 @@ export const setSchedule = mutation({
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.id);
     if (!task) return false;
+
+    const mission = await ctx.db.get(task.missionId as any);
+    if (!mission) throw new Error("Mission not found");
+    if (mission.intakeStatus !== "complete") {
+      throw new Error("Mission intake must be completed before scheduling tasks");
+    }
+
     if (task.status !== "inbox") {
       throw new Error("Scheduling is only allowed for inbox tasks");
     }

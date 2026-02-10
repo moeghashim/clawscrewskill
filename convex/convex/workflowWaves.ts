@@ -69,6 +69,10 @@ export const runWave = mutation({
 
     for (const run of runningRuns) {
       if (started >= limit) break;
+
+      const mission = await ctx.db.get(run.missionId as any);
+      if (!mission) continue;
+      if (mission.intakeStatus !== "complete") continue;
       const arr = byRun.get(run._id) ?? [];
       const step = arr.find((s) => s.index === run.currentStepIndex) ?? null;
       if (!step) continue;

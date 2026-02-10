@@ -71,6 +71,12 @@ export const start = mutation({
     createdByAgentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args) => {
+    const mission = await ctx.db.get(args.missionId);
+    if (!mission) throw new Error("Mission not found");
+    if (mission.intakeStatus !== "complete") {
+      throw new Error("Mission intake must be completed before starting runs");
+    }
+
     const wf = await ctx.db
       .query("workflows")
       .withIndex("by_key", (q) => q.eq("key", args.workflowKey))
