@@ -39,6 +39,7 @@ export default function Home() {
   const [dmDraft, setDmDraft] = useState("");
 
   const docs = (useQuery(api.documents.list) || []) as any[];
+  const connectorStatus = (useQuery(api.connector.status) || null) as any;
   const unreadCounts = (useQuery(api.directMessages.unreadCounts) || {}) as Record<string, number>;
   const dmThread = (useQuery(api.directMessages.thread, {
     agentId: (selectedAgentId ?? undefined) as any,
@@ -519,6 +520,12 @@ export default function Home() {
                         <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/50">
                           Role: {selectedRunStep.role} • Status: {selectedRunStep.status}
                         </div>
+                        <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/50">
+                          Worker: {selectedRunStep.executionWorker ?? "-"} • Attempts: {selectedRunStep.executionAttempts ?? 0}
+                        </div>
+                        <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/50">
+                          Lock until: {selectedRunStep.executionLockUntil ? new Date(selectedRunStep.executionLockUntil).toLocaleString() : "-"}
+                        </div>
 
                         <textarea
                           className="w-full border border-[#3A3A38]/20 px-2 py-2 text-[10px] font-mono min-h-[120px]"
@@ -641,6 +648,16 @@ export default function Home() {
               <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
                 Running tasks:{" "}
                 <span className="text-[#3A3A38]">{tasks.filter((t) => t.enabled !== false && !(t.dependsOnTaskIds?.length) && !t.waitingForTaskId).length}</span>
+              </div>
+              <div className="h-3 w-[1px] bg-[#3A3A38]/20"></div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
+                Connector:{" "}
+                <span className={connectorStatus?.connectorActive ? "text-[var(--forest)]" : "text-[var(--coral)]"}>
+                  {connectorStatus?.connectorActive ? "active" : "idle"}
+                </span>
+              </div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/50">
+                Locks: <span className="text-[#3A3A38]">{connectorStatus?.activeLocks ?? 0}</span>
               </div>
             </div>
 

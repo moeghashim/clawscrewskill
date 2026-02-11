@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { v } from "convex/values";
 
@@ -132,5 +132,32 @@ export const releaseClaim = mutation({
       executionWorker: undefined,
     });
     return { ok: true, skipped: false };
+  },
+});
+
+export const status = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = nowMs();
+    const steps = await ctx.db.query("runSteps").collect();
+    const activeLocks = steps.filter((s: any) => s.executionLockUntil && s.executionLockUntil > now).length;
+
+    const recent = await ctx.db.query("activities").order("desc").take(80);
+    const lastTick = recent.find((a: any) => a.type === "workflow_wave_tick") || null;
+    const lastAutoStart = recent.find((a: any) => a.type === "workflow_wave_auto_start") || null;
+
+    const connectorActive =
+      !!lastTick &&
+      now - lastTick._creationTime < 60_000;
+
+    return {
+      ok: true,
+      connectorActive,
+      activeLocks,
+      lastTickAt: lastTick?._creationTime,
+      lastTickMessage: lastTick?.message,
+      lastAutoStartAt: lastAutoStart?._creationTime,
+      lastAutoStartMessage: lastAutoStart?.message,
+    };
   },
 });
