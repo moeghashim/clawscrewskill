@@ -10,8 +10,8 @@ function usage() {
 
 Usage:
   clawscrew install [--dry-run]
-  clawscrew connector [--once] [--poll-ms <ms>] [--worker-id <id>] [--auto-pass] [--execute-openclaw]
-  clawscrew connector-service [--dry-run] [--deploy-key <key>] [--poll-ms <ms>] [--worker-id <id>] [--execute-openclaw]
+  clawscrew connector [--once] [--poll-ms <ms>] [--worker-id <id>] [--auto-pass] [--execute-openclaw] [--deployment <name>] [--deploy-key <key>]
+  clawscrew connector-service [--dry-run] [--deploy-key <key>] [--poll-ms <ms>] [--worker-id <id>] [--execute-openclaw] [--deployment <name>]
 `);
 }
 
@@ -26,6 +26,7 @@ function parseArgs(argv) {
     else if (a === "--poll-ms") args.pollMs = Number(argv[++i] || "0");
     else if (a === "--worker-id") args.workerId = String(argv[++i] || "");
     else if (a === "--deploy-key") args.deployKey = String(argv[++i] || "");
+    else if (a === "--deployment") args.deployment = String(argv[++i] || "");
     else args._.push(a);
   }
   return args;
@@ -351,12 +352,18 @@ async function install({ dryRun }) {
   }
 }
 
-async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw }) {
+async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw, deployKey, deployment }) {
   const repoRoot = getRepoRoot();
   const effectivePollMs = Math.max(3000, Number(pollMs || 10000));
   const id = workerId || `connector-${process.pid}`;
 
+  if (deployment) process.env.CONVEX_DEPLOYMENT = normalizeEnvValue(deployment);
+  if (deployKey) process.env.CONVEX_DEPLOY_KEY = normalizeEnvValue(deployKey);
+
   process.stdout.write(`Starting connector as ${id} (poll ${effectivePollMs}ms)\n`);
+  if (!process.env.CONVEX_DEPLOY_KEY) {
+    process.stdout.write("Warning: CONVEX_DEPLOY_KEY is not set; commands may target a different deployment context.\n");
+  }
   if (!autoPass && !executeOpenclaw) {
     process.stdout.write("Note: no executor selected. Claimed steps will be logged and then released.\n");
   }
@@ -430,10 +437,10 @@ async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw }) 
   }
 }
 
-async function connectorService({ dryRun, deployKey, pollMs, workerId, executeOpenclaw }) {
+async function connectorService({ dryRun, deployKey, deployment, pollMs, workerId, executeOpenclaw }) {
   const repoRoot = getRepoRoot();
   const convexEnv = readEnvFile(path.join(repoRoot, "convex", ".env.local"));
-  const convexDeployment = normalizeEnvValue(process.env.CONVEX_DEPLOYMENT || convexEnv.CONVEX_DEPLOYMENT || "");
+  const convexDeployment = normalizeEnvValue(deployment || process.env.CONVEX_DEPLOYMENT || convexEnv.CONVEX_DEPLOYMENT || "");
   const effectiveDeployKey = normalizeEnvValue(deployKey || process.env.CONVEX_DEPLOY_KEY || "");
   const effectivePollMs = Math.max(3000, Number(pollMs || 10000));
   const effectiveWorkerId = workerId || "connector-daemon";
@@ -552,6 +559,8 @@ async function main() {
       workerId: args.workerId,
       autoPass: !!args.autoPass,
       executeOpenclaw: !!args.executeOpenclaw,
+      deployKey: args.deployKey,
+      deployment: args.deployment,
     });
     return;
   }
@@ -559,6 +568,7 @@ async function main() {
     await connectorService({
       dryRun: !!args.dryRun,
       deployKey: args.deployKey,
+      deployment: args.deployment,
       pollMs: args.pollMs,
       workerId: args.workerId,
       executeOpenclaw: !!args.executeOpenclaw,

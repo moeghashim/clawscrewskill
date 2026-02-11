@@ -41,6 +41,8 @@ CONVEX_DEPLOYMENT=<deployment> CONVEX_DEPLOY_KEY=<key> node skill/bin/clawscrew 
 ### C) Real OpenClaw execution (isolated session per step)
 ```bash
 CONVEX_DEPLOYMENT=<deployment> CONVEX_DEPLOY_KEY=<key> node skill/bin/clawscrew connector --once --execute-openclaw --worker-id oc-worker
+# or pass explicitly as flags:
+node skill/bin/clawscrew connector --once --execute-openclaw --worker-id oc-worker --deployment <deployment> --deploy-key '<key>'
 ```
 
 ## 5) Install background connector service
