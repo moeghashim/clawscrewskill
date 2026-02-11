@@ -22,6 +22,8 @@ export default function Home() {
   const createMission = useMutation(api.missions.create);
   const updateMission = useMutation(api.missions.update);
   const createTask = useMutation(api.tasks.create);
+  const startMissionIntake = useMutation(api.orchestrator.startMissionIntake);
+  const completeMissionIntake = useMutation(api.orchestrator.completeMissionIntake);
   const toggleEnabled = useMutation(api.tasks.toggleEnabled);
   const pauseTask = useMutation(api.tasks.pause);
   const deleteTask = useMutation(api.tasks.remove);
@@ -33,8 +35,10 @@ export default function Home() {
 
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [intakeAnswers, setIntakeAnswers] = useState("");
   const [dmDraft, setDmDraft] = useState("");
 
+  const docs = (useQuery(api.documents.list) || []) as any[];
   const unreadCounts = (useQuery(api.directMessages.unreadCounts) || {}) as Record<string, number>;
   const dmThread = (useQuery(api.directMessages.thread, {
     agentId: (selectedAgentId ?? undefined) as any,
@@ -204,6 +208,11 @@ export default function Home() {
     await clearSchedule({ id: task._id });
   };
 
+  const selectedMission = selectedMissionId ? missions.find((m) => m._id === selectedMissionId) : null;
+  const intakeDoc = selectedMissionId
+    ? docs.find((d) => d.type === "intake" && d.missionId === selectedMissionId)
+    : null;
+
   const visibleTasks = tasks
     .filter((t) => (selectedMissionId ? t.missionId === selectedMissionId : true))
     .filter((t) => (selectedAgentId ? t.assigneeIds?.includes(selectedAgentId) : true));
@@ -352,8 +361,47 @@ export default function Home() {
                         {agentsById.get(selectedAgentId ?? "")?.name ?? "(none)"}
                       </div>
                       <div className="font-mono text-[9px] text-[#3A3A38]/40 mt-1">
-                        Intake: {missions.find((x) => x._id === selectedMissionId)?.intakeStatus}
+                        Intake: {selectedMission?.intakeStatus}
                       </div>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (!selectedMissionId) return;
+                            await startMissionIntake({ missionId: selectedMissionId as any });
+                          }}
+                          className="border border-[#3A3A38]/20 px-2 py-1 text-[9px] font-mono uppercase tracking-wider"
+                        >
+                          Restart Intake
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!selectedMissionId) return;
+                            await completeMissionIntake({
+                              missionId: selectedMissionId as any,
+                              answersMarkdown: intakeAnswers || "Intake completed from UI.",
+                            } as any);
+                            setIntakeAnswers("");
+                          }}
+                          className="border border-[#3A3A38]/20 px-2 py-1 text-[9px] font-mono uppercase tracking-wider"
+                        >
+                          Complete Intake
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="border border-[#3A3A38]/10 bg-white p-2">
+                      <div className="font-mono text-[9px] uppercase tracking-widest text-[#3A3A38]/40 mb-1">Intake answers</div>
+                      <textarea
+                        className="w-full border border-[#3A3A38]/20 px-2 py-1 text-[10px] min-h-[70px]"
+                        placeholder="Paste brief intake answers here…"
+                        value={intakeAnswers}
+                        onChange={(e) => setIntakeAnswers(e.target.value)}
+                      />
+                      {intakeDoc ? (
+                        <div className="mt-2 font-mono text-[9px] text-[#3A3A38]/40 line-clamp-3 whitespace-pre-wrap">
+                          {intakeDoc.content}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
