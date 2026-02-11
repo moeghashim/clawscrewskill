@@ -107,14 +107,44 @@ function extractJsonObject(text) {
   }
 }
 
+function findGateObjectDeep(value) {
+  if (!value) return null;
+  if (Array.isArray(value)) {
+    for (const v of value) {
+      const found = findGateObjectDeep(v);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof value === "object") {
+    const status = typeof value.status === "string" ? value.status.toUpperCase() : null;
+    if ((status === "PASS" || status === "FAIL") && typeof value.summary === "string") {
+      return {
+        status,
+        summary: value.summary,
+        reason: typeof value.reason === "string" ? value.reason : undefined,
+      };
+    }
+    for (const v of Object.values(value)) {
+      const found = findGateObjectDeep(v);
+      if (found) return found;
+    }
+  }
+  if (typeof value === "string") {
+    const parsed = extractJsonObject(value);
+    if (parsed) return findGateObjectDeep(parsed);
+  }
+  return null;
+}
+
 function runConvex(repoRoot, fnId, payload) {
   const convexDir = path.join(repoRoot, "convex");
   const convexEnvLocal = path.join(convexDir, ".env.local");
   const envFileVars = readEnvFile(convexEnvLocal);
-  if (envFileVars.CONVEX_DEPLOYMENT) {
+  if (!process.env.CONVEX_DEPLOYMENT && envFileVars.CONVEX_DEPLOYMENT) {
     process.env.CONVEX_DEPLOYMENT = normalizeEnvValue(envFileVars.CONVEX_DEPLOYMENT);
   }
-  if (envFileVars.CONVEX_URL && !process.env.CONVEX_URL) {
+  if (!process.env.CONVEX_URL && envFileVars.CONVEX_URL) {
     process.env.CONVEX_URL = normalizeEnvValue(envFileVars.CONVEX_URL);
   }
 
@@ -153,18 +183,16 @@ function executeWithOpenClaw({ claim }) {
     "--json",
   ], { captureStdout: true });
 
-  // Try to parse OpenClaw JSON envelope first, then fallback to extracting last JSON object.
   try {
     const parsed = JSON.parse(out);
-    const maybeText = JSON.stringify(parsed);
-    const gate = extractJsonObject(maybeText) || extractJsonObject(out);
+    const gate = findGateObjectDeep(parsed);
     if (gate) return JSON.stringify(gate);
   } catch {
-    // ignore
+    // ignore parse failure and continue fallback strategies
   }
 
-  const gate = extractJsonObject(out);
-  if (gate) return JSON.stringify(gate);
+  const gateFromText = findGateObjectDeep(out) || extractJsonObject(out);
+  if (gateFromText) return JSON.stringify(gateFromText);
 
   // fallback to FAIL if model output isn't parseable
   return JSON.stringify({
@@ -361,13 +389,27 @@ async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw }) 
 
         process.stdout.write(`Submitted PASS result for ${claim.runStepId}\n`);
       } else if (executeOpenclaw) {
-        const content = executeWithOpenClaw({ claim });
-        runConvex(repoRoot, "connector.js:submitResult", {
-          workerId: id,
-          runStepId: claim.runStepId,
-          content,
-        });
-        process.stdout.write(`Submitted OpenClaw result for ${claim.runStepId}\n`);
+        try {
+          const content = executeWithOpenClaw({ claim });
+          runConvex(repoRoot, "connector.js:submitResult", {
+            workerId: id,
+            runStepId: claim.runStepId,
+            content,
+          });
+          process.stdout.write(`Submitted OpenClaw result for ${claim.runStepId}\n`);
+        } catch (err) {
+          const content = JSON.stringify({
+            status: "FAIL",
+            summary: `OpenClaw execution error on ${claim.stepKey}`,
+            reason: String(err?.message || err),
+          });
+          runConvex(repoRoot, "connector.js:submitResult", {
+            workerId: id,
+            runStepId: claim.runStepId,
+            content,
+          });
+          process.stderr.write(`Submitted FAIL due to executor error for ${claim.runStepId}\n`);
+        }
       } else {
         runConvex(repoRoot, "connector.js:releaseClaim", {
           workerId: id,

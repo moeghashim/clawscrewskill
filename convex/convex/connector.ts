@@ -75,6 +75,9 @@ export const submitResult = mutation({
     if (step.executionWorker && step.executionWorker !== args.workerId) {
       throw new Error("Run step claimed by another worker");
     }
+    if (step.executionLockUntil && step.executionLockUntil < nowMs()) {
+      throw new Error("Run step lock expired; reclaim before submit");
+    }
 
     let fromAgentId = args.fromAgentId;
     if (!fromAgentId) {
