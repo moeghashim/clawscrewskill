@@ -11,6 +11,7 @@ function usage() {
 Usage:
   clawscrew install [--dry-run]
   clawscrew connector [--once] [--poll-ms <ms>] [--worker-id <id>] [--auto-pass] [--execute-openclaw]
+  clawscrew connector-service [--dry-run] [--deploy-key <key>] [--poll-ms <ms>] [--worker-id <id>] [--execute-openclaw]
 `);
 }
 
@@ -24,6 +25,7 @@ function parseArgs(argv) {
     else if (a === "--execute-openclaw") args.executeOpenclaw = true;
     else if (a === "--poll-ms") args.pollMs = Number(argv[++i] || "0");
     else if (a === "--worker-id") args.workerId = String(argv[++i] || "");
+    else if (a === "--deploy-key") args.deployKey = String(argv[++i] || "");
     else args._.push(a);
   }
   return args;
@@ -428,6 +430,110 @@ async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw }) 
   }
 }
 
+async function connectorService({ dryRun, deployKey, pollMs, workerId, executeOpenclaw }) {
+  const repoRoot = getRepoRoot();
+  const convexEnv = readEnvFile(path.join(repoRoot, "convex", ".env.local"));
+  const convexDeployment = normalizeEnvValue(process.env.CONVEX_DEPLOYMENT || convexEnv.CONVEX_DEPLOYMENT || "");
+  const effectiveDeployKey = normalizeEnvValue(deployKey || process.env.CONVEX_DEPLOY_KEY || "");
+  const effectivePollMs = Math.max(3000, Number(pollMs || 10000));
+  const effectiveWorkerId = workerId || "connector-daemon";
+
+  if (!convexDeployment) {
+    throw new Error("Missing CONVEX_DEPLOYMENT (set env or convex/.env.local)");
+  }
+  if (!effectiveDeployKey) {
+    throw new Error("Missing CONVEX_DEPLOY_KEY (pass --deploy-key or set env)");
+  }
+
+  const nodeBin = process.execPath;
+  const scriptPath = path.join(repoRoot, "skill", "bin", "clawscrew");
+
+  if (process.platform === "darwin") {
+    const label = "ai.clawscrew.connector";
+    const plistPath = path.join(process.env.HOME || "", "Library", "LaunchAgents", `${label}.plist`);
+    ensureDir(path.dirname(plistPath));
+
+    const args = [
+      scriptPath,
+      "connector",
+      "--poll-ms",
+      String(effectivePollMs),
+      "--worker-id",
+      effectiveWorkerId,
+    ];
+    if (executeOpenclaw) args.push("--execute-openclaw");
+
+    const plist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>${label}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>${nodeBin}</string>
+    ${args.map((a) => `<string>${a}</string>`).join("\n    ")}
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>CONVEX_DEPLOYMENT</key><string>${convexDeployment}</string>
+    <key>CONVEX_DEPLOY_KEY</key><string>${effectiveDeployKey}</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>${path.join(repoRoot, "logs", "connector.out.log")}</string>
+  <key>StandardErrorPath</key><string>${path.join(repoRoot, "logs", "connector.err.log")}</string>
+</dict>
+</plist>
+`;
+
+    if (dryRun) {
+      process.stdout.write(`Dry run: would write ${plistPath}\n`);
+      return;
+    }
+
+    ensureDir(path.join(repoRoot, "logs"));
+    fs.writeFileSync(plistPath, plist, "utf8");
+    try {
+      run("launchctl", ["unload", plistPath], { cwd: repoRoot, captureStdout: false });
+    } catch {
+      // ignore if not loaded yet
+    }
+    run("launchctl", ["load", plistPath], { cwd: repoRoot, captureStdout: false });
+    process.stdout.write(`Installed connector service: ${plistPath}\n`);
+    return;
+  }
+
+  if (process.platform === "linux") {
+    const unitPath = path.join(repoRoot, "connector.service");
+    const cmd = `${nodeBin} ${scriptPath} connector --poll-ms ${effectivePollMs} --worker-id ${effectiveWorkerId}${executeOpenclaw ? " --execute-openclaw" : ""}`;
+    const unit = `[Unit]
+Description=ClawsCrew Connector
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${repoRoot}
+Environment=CONVEX_DEPLOYMENT=${convexDeployment}
+Environment=CONVEX_DEPLOY_KEY=${effectiveDeployKey}
+ExecStart=${cmd}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+`;
+    if (dryRun) {
+      process.stdout.write(`Dry run: would write ${unitPath}\n`);
+      return;
+    }
+    fs.writeFileSync(unitPath, unit, "utf8");
+    process.stdout.write(`Wrote ${unitPath}. Install with: sudo cp ${unitPath} /etc/systemd/system/clawscrew-connector.service && sudo systemctl daemon-reload && sudo systemctl enable --now clawscrew-connector\n`);
+    return;
+  }
+
+  throw new Error(`Unsupported platform for connector-service: ${process.platform}`);
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const cmd = args._[0];
@@ -445,6 +551,16 @@ async function main() {
       pollMs: args.pollMs,
       workerId: args.workerId,
       autoPass: !!args.autoPass,
+      executeOpenclaw: !!args.executeOpenclaw,
+    });
+    return;
+  }
+  if (cmd === "connector-service") {
+    await connectorService({
+      dryRun: !!args.dryRun,
+      deployKey: args.deployKey,
+      pollMs: args.pollMs,
+      workerId: args.workerId,
       executeOpenclaw: !!args.executeOpenclaw,
     });
     return;
