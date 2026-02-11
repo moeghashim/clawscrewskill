@@ -50,7 +50,7 @@ export default function Home() {
   }) || []) as any[];
   const markReadForAgent = useMutation(api.directMessages.markReadForAgent);
   const sendDm = useMutation(api.directMessages.send);
-  const runWave = useMutation(api.workflowWaves.runWave);
+  const startAutoWave = useMutation(api.workflowWaves.startAuto);
   const runs = (useQuery(api.runs.list, { limit: 20 }) || []) as any[];
   const visibleRuns = selectedMissionId ? runs.filter((r) => r.missionId === selectedMissionId) : runs;
   const startRun = useMutation(api.runs.start);
@@ -646,14 +646,13 @@ export default function Home() {
 
             <button
               onClick={async () => {
-                const systemId = await ensureSystemAgentId();
-                await runWave({ runnerAgentId: systemId, limit: 5 } as any);
+                await startAutoWave({ intervalMs: 15000, limit: 5 } as any);
               }}
               className="flex items-center gap-2 border border-[#3A3A38]/20 hover:border-[#3A3A38]/50 px-3 py-1.5"
-              title="Run next workflow wave (start ready steps)"
+              title="Ensure auto-wave loop is running"
             >
               <BoltIcon className="w-4 h-4 text-[#3A3A38]/70" />
-              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/70">Run Wave</span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#3A3A38]/70">Auto Wave</span>
             </button>
           </div>
 

@@ -34,6 +34,8 @@ export const create = mutation({
 
     // Kick off orchestrator intake loop (required gate).
     await ctx.runMutation(api.orchestrator.startMissionIntake, { missionId });
+    // Ensure auto-wave loop is running (idempotent guard inside startAuto).
+    await ctx.runMutation(api.workflowWaves.startAuto, {});
 
     return missionId;
   },
