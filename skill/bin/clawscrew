@@ -10,7 +10,7 @@ function usage() {
 
 Usage:
   clawscrew install [--dry-run]
-  clawscrew connector [--once] [--poll-ms <ms>] [--worker-id <id>] [--auto-pass]
+  clawscrew connector [--once] [--poll-ms <ms>] [--worker-id <id>] [--auto-pass] [--execute-openclaw]
 `);
 }
 
@@ -21,6 +21,7 @@ function parseArgs(argv) {
     if (a === "--dry-run") args.dryRun = true;
     else if (a === "--once") args.once = true;
     else if (a === "--auto-pass") args.autoPass = true;
+    else if (a === "--execute-openclaw") args.executeOpenclaw = true;
     else if (a === "--poll-ms") args.pollMs = Number(argv[++i] || "0");
     else if (a === "--worker-id") args.workerId = String(argv[++i] || "");
     else args._.push(a);
@@ -93,6 +94,19 @@ function getRepoRoot() {
   return path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "..");
 }
 
+function extractJsonObject(text) {
+  const src = String(text || "");
+  const start = src.lastIndexOf("{");
+  const end = src.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  const candidate = src.slice(start, end + 1);
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    return null;
+  }
+}
+
 function runConvex(repoRoot, fnId, payload) {
   const convexDir = path.join(repoRoot, "convex");
   const convexEnvLocal = path.join(convexDir, ".env.local");
@@ -111,6 +125,53 @@ function runConvex(repoRoot, fnId, payload) {
   const payloadJson = JSON.stringify(payload ?? {});
   const out = run("npx", ["convex", "run", fnId, payloadJson], { cwd: convexDir, captureStdout: true });
   return out.trim();
+}
+
+function executeWithOpenClaw({ claim }) {
+  const sessionId = `clawscrew:${claim.runStepId}`;
+  const role = claim.role || "runner";
+  const message = [
+    `You are the ${role} runner for ClawsCrew workflow execution.`,
+    `Run title: ${claim.runTitle}`,
+    `Step: ${claim.stepKey}`,
+    `Task: ${claim.taskTitle || claim.taskId}`,
+    "",
+    "Return ONLY a JSON object with this shape:",
+    '{"status":"PASS|FAIL","summary":"short summary","reason":"optional reason"}',
+    "",
+    "If step succeeded, return PASS. If blocked/failed, return FAIL with reason.",
+  ].join("\n");
+
+  const out = run("openclaw", [
+    "agent",
+    "--session-id",
+    sessionId,
+    "--message",
+    message,
+    "--thinking",
+    "low",
+    "--json",
+  ], { captureStdout: true });
+
+  // Try to parse OpenClaw JSON envelope first, then fallback to extracting last JSON object.
+  try {
+    const parsed = JSON.parse(out);
+    const maybeText = JSON.stringify(parsed);
+    const gate = extractJsonObject(maybeText) || extractJsonObject(out);
+    if (gate) return JSON.stringify(gate);
+  } catch {
+    // ignore
+  }
+
+  const gate = extractJsonObject(out);
+  if (gate) return JSON.stringify(gate);
+
+  // fallback to FAIL if model output isn't parseable
+  return JSON.stringify({
+    status: "FAIL",
+    summary: "Runner output was not valid gate JSON",
+    reason: "Non-JSON response from OpenClaw agent",
+  });
 }
 
 async function install({ dryRun }) {
@@ -260,14 +321,14 @@ async function install({ dryRun }) {
   }
 }
 
-async function connector({ once, pollMs, workerId, autoPass }) {
+async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw }) {
   const repoRoot = getRepoRoot();
   const effectivePollMs = Math.max(3000, Number(pollMs || 10000));
   const id = workerId || `connector-${process.pid}`;
 
   process.stdout.write(`Starting connector as ${id} (poll ${effectivePollMs}ms)\n`);
-  if (!autoPass) {
-    process.stdout.write("Note: --auto-pass is off. Claimed steps will be logged and then released.\n");
+  if (!autoPass && !executeOpenclaw) {
+    process.stdout.write("Note: no executor selected. Claimed steps will be logged and then released.\n");
   }
 
   // eslint-disable-next-line no-constant-condition
@@ -299,6 +360,14 @@ async function connector({ once, pollMs, workerId, autoPass }) {
         });
 
         process.stdout.write(`Submitted PASS result for ${claim.runStepId}\n`);
+      } else if (executeOpenclaw) {
+        const content = executeWithOpenClaw({ claim });
+        runConvex(repoRoot, "connector.js:submitResult", {
+          workerId: id,
+          runStepId: claim.runStepId,
+          content,
+        });
+        process.stdout.write(`Submitted OpenClaw result for ${claim.runStepId}\n`);
       } else {
         runConvex(repoRoot, "connector.js:releaseClaim", {
           workerId: id,
@@ -334,6 +403,7 @@ async function main() {
       pollMs: args.pollMs,
       workerId: args.workerId,
       autoPass: !!args.autoPass,
+      executeOpenclaw: !!args.executeOpenclaw,
     });
     return;
   }
