@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 
 export const list = query({
   args: {},
@@ -31,6 +32,9 @@ export const create = mutation({
       message: `Created mission: ${args.name}`,
     });
 
+    // Kick off orchestrator intake loop (required gate).
+    await ctx.runMutation(api.orchestrator.startMissionIntake, { missionId });
+
     return missionId;
   },
 });
@@ -48,12 +52,29 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const { id, ...patch } = args;
+
+    const changedIntakeFields =
+      args.name !== undefined ||
+      args.objective !== undefined ||
+      args.constraints !== undefined ||
+      args.toolsAllowed !== undefined ||
+      args.soul !== undefined;
+
+    // If the user changes mission definition fields, require re-intake unless explicitly overridden.
+    if (changedIntakeFields && patch.intakeStatus === undefined) {
+      (patch as any).intakeStatus = "needs_intake";
+    }
+
     await ctx.db.patch(id, patch);
 
     await ctx.db.insert("activities", {
       type: "mission_update",
       message: `Updated mission: ${id}`,
     });
+
+    if (changedIntakeFields) {
+      await ctx.runMutation(api.orchestrator.startMissionIntake, { missionId: id });
+    }
 
     return true;
   },

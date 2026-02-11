@@ -18,6 +18,7 @@ import type * as health from "../health.js";
 import type * as messages from "../messages.js";
 import type * as missions from "../missions.js";
 import type * as notifications from "../notifications.js";
+import type * as orchestrator from "../orchestrator.js";
 import type * as runEngine from "../runEngine.js";
 import type * as runSteps from "../runSteps.js";
 import type * as runs from "../runs.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   missions: typeof missions;
   notifications: typeof notifications;
+  orchestrator: typeof orchestrator;
   runEngine: typeof runEngine;
   runSteps: typeof runSteps;
   runs: typeof runs;

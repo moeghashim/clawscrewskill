@@ -9,9 +9,13 @@ export const create = mutation({
       v.literal("deliverable"),
       v.literal("research"),
       v.literal("protocol"),
+      v.literal("system_memory"),
+      v.literal("mission_memory"),
+      v.literal("intake"),
       v.literal("other")
     ),
     taskId: v.optional(v.id("tasks")),
+    missionId: v.optional(v.id("missions")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("documents", {
@@ -19,6 +23,7 @@ export const create = mutation({
       content: args.content,
       type: args.type,
       taskId: args.taskId,
+      missionId: args.missionId,
     });
   },
 });
