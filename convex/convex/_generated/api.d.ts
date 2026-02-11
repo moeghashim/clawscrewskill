@@ -11,6 +11,7 @@
 import type * as activities from "../activities.js";
 import type * as admin from "../admin.js";
 import type * as agents from "../agents.js";
+import type * as connector from "../connector.js";
 import type * as directMessages from "../directMessages.js";
 import type * as documents from "../documents.js";
 import type * as feed from "../feed.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   admin: typeof admin;
   agents: typeof agents;
+  connector: typeof connector;
   directMessages: typeof directMessages;
   documents: typeof documents;
   feed: typeof feed;

@@ -164,6 +164,12 @@ export default defineSchema({
     assignedAgentId: v.optional(v.id("agents")),
     lastMessageId: v.optional(v.id("messages")),
     lastGateResultJson: v.optional(v.string()),
+
+    // Connector execution lock (for external worker idempotency)
+    executionWorker: v.optional(v.string()),
+    executionLockUntil: v.optional(v.number()),
+    executionAttempts: v.optional(v.number()),
+
     seed: v.optional(v.boolean()),
   }).index("by_run", ["runId"]),
 });

@@ -10,13 +10,19 @@ function usage() {
 
 Usage:
   clawscrew install [--dry-run]
+  clawscrew connector [--once] [--poll-ms <ms>] [--worker-id <id>] [--auto-pass]
 `);
 }
 
 function parseArgs(argv) {
   const args = { _: [] };
-  for (const a of argv) {
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
     if (a === "--dry-run") args.dryRun = true;
+    else if (a === "--once") args.once = true;
+    else if (a === "--auto-pass") args.autoPass = true;
+    else if (a === "--poll-ms") args.pollMs = Number(argv[++i] || "0");
+    else if (a === "--worker-id") args.workerId = String(argv[++i] || "");
     else args._.push(a);
   }
   return args;
@@ -39,6 +45,16 @@ function writeEnvFile(filePath, kv) {
   fs.writeFileSync(filePath, lines.join("\n"), "utf8");
 }
 
+function normalizeEnvValue(v) {
+  let s = String(v ?? "").trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  // Strip inline comments in .env values like: VALUE=abc # comment
+  s = s.replace(/\s+#.*$/, "").trim();
+  return s;
+}
+
 function readEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return {};
   const out = {};
@@ -49,7 +65,7 @@ function readEnvFile(filePath) {
     const eq = trimmed.indexOf("=");
     if (eq === -1) continue;
     const k = trimmed.slice(0, eq).trim();
-    const v = trimmed.slice(eq + 1).trim();
+    const v = normalizeEnvValue(trimmed.slice(eq + 1));
     out[k] = v;
   }
   return out;
@@ -67,6 +83,34 @@ function run(cmd, args, { cwd, captureStdout } = {}) {
     throw new Error(`Command failed (${code}): ${cmd} ${args.join(" ")}`);
   }
   return captureStdout ? (res.stdout || "") : "";
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getRepoRoot() {
+  return path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "..");
+}
+
+function runConvex(repoRoot, fnId, payload) {
+  const convexDir = path.join(repoRoot, "convex");
+  const convexEnvLocal = path.join(convexDir, ".env.local");
+  const envFileVars = readEnvFile(convexEnvLocal);
+  if (envFileVars.CONVEX_DEPLOYMENT) {
+    process.env.CONVEX_DEPLOYMENT = normalizeEnvValue(envFileVars.CONVEX_DEPLOYMENT);
+  }
+  if (envFileVars.CONVEX_URL && !process.env.CONVEX_URL) {
+    process.env.CONVEX_URL = normalizeEnvValue(envFileVars.CONVEX_URL);
+  }
+
+  if (process.env.CONVEX_DEPLOYMENT) {
+    process.env.CONVEX_DEPLOYMENT = normalizeEnvValue(process.env.CONVEX_DEPLOYMENT);
+  }
+
+  const payloadJson = JSON.stringify(payload ?? {});
+  const out = run("npx", ["convex", "run", fnId, payloadJson], { cwd: convexDir, captureStdout: true });
+  return out.trim();
 }
 
 async function install({ dryRun }) {
@@ -216,6 +260,63 @@ async function install({ dryRun }) {
   }
 }
 
+async function connector({ once, pollMs, workerId, autoPass }) {
+  const repoRoot = getRepoRoot();
+  const effectivePollMs = Math.max(3000, Number(pollMs || 10000));
+  const id = workerId || `connector-${process.pid}`;
+
+  process.stdout.write(`Starting connector as ${id} (poll ${effectivePollMs}ms)\n`);
+  if (!autoPass) {
+    process.stdout.write("Note: --auto-pass is off. Claimed steps will be logged and then released.\n");
+  }
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      const raw = runConvex(repoRoot, "connector.js:claimNext", { workerId: id });
+      const parsed = raw ? JSON.parse(raw) : {};
+      const claim = parsed.claim;
+
+      if (!claim) {
+        if (once) return;
+        await sleep(effectivePollMs);
+        continue;
+      }
+
+      process.stdout.write(`Claimed step ${claim.stepKey} (${claim.runStepId}) in run \"${claim.runTitle}\"\n`);
+
+      if (autoPass) {
+        const content = JSON.stringify({
+          status: "PASS",
+          summary: `Connector auto-pass for ${claim.stepKey}`,
+          by: id,
+        });
+
+        runConvex(repoRoot, "connector.js:submitResult", {
+          workerId: id,
+          runStepId: claim.runStepId,
+          content,
+        });
+
+        process.stdout.write(`Submitted PASS result for ${claim.runStepId}\n`);
+      } else {
+        runConvex(repoRoot, "connector.js:releaseClaim", {
+          workerId: id,
+          runStepId: claim.runStepId,
+        });
+        process.stdout.write(`Released claim ${claim.runStepId} (dry execution)\n`);
+      }
+
+      if (once) return;
+      await sleep(500);
+    } catch (err) {
+      process.stderr.write(`Connector loop error: ${String(err?.message || err)}\n`);
+      if (once) throw err;
+      await sleep(effectivePollMs);
+    }
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const cmd = args._[0];
@@ -225,6 +326,15 @@ async function main() {
   }
   if (cmd === "install") {
     await install({ dryRun: !!args.dryRun });
+    return;
+  }
+  if (cmd === "connector") {
+    await connector({
+      once: !!args.once,
+      pollMs: args.pollMs,
+      workerId: args.workerId,
+      autoPass: !!args.autoPass,
+    });
     return;
   }
 
