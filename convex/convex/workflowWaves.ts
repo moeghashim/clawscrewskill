@@ -85,7 +85,7 @@ async function runWaveCore(ctx: any, args: { runnerAgentId?: string; limit?: num
         missionId: run.missionId,
         title: `${run.title} / ${step.stepKey}`,
         description: `Workflow: ${run.workflowKey}`,
-        status: "inbox",
+        status: "in_progress",
         assigneeIds: step.assignedAgentId ? [step.assignedAgentId] : [],
         enabled: true,
         schedule: undefined,
@@ -102,6 +102,9 @@ async function runWaveCore(ctx: any, args: { runnerAgentId?: string; limit?: num
     if (!latest || latest.status !== "pending") continue;
 
     await ctx.db.patch(step._id, { status: "running" });
+    if (taskId) {
+      await ctx.db.patch(taskId as any, { status: "in_progress" });
+    }
 
     await ctx.db.insert("activities", {
       type: "workflow_wave_start",

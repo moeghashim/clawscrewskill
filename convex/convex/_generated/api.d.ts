@@ -16,6 +16,7 @@ import type * as directMessages from "../directMessages.js";
 import type * as documents from "../documents.js";
 import type * as feed from "../feed.js";
 import type * as health from "../health.js";
+import type * as maintenance from "../maintenance.js";
 import type * as messages from "../messages.js";
 import type * as missions from "../missions.js";
 import type * as notifications from "../notifications.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   documents: typeof documents;
   feed: typeof feed;
   health: typeof health;
+  maintenance: typeof maintenance;
   messages: typeof messages;
   missions: typeof missions;
   notifications: typeof notifications;

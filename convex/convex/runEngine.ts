@@ -72,6 +72,9 @@ export const submitStepResult = mutation({
 
     if (result.status === "PASS") {
       await ctx.db.patch(step._id, { status: "passed" });
+      if (step.taskId) {
+        await ctx.db.patch(step.taskId as any, { status: "done" });
+      }
 
       const nextIndex = step.index + 1;
       const steps = await ctx.db
@@ -103,7 +106,7 @@ export const submitStepResult = mutation({
           missionId: run.missionId,
           title: `${run.title} / ${next.stepKey}`, 
           description: `Workflow: ${run.workflowKey}`,
-          status: "inbox",
+          status: "in_progress",
           assigneeIds: next.assignedAgentId ? [next.assignedAgentId] : [],
           enabled: true,
           schedule: undefined,
@@ -116,6 +119,9 @@ export const submitStepResult = mutation({
       }
 
       await ctx.db.patch(next._id, { status: "running" });
+      if (nextTaskId) {
+        await ctx.db.patch(nextTaskId as any, { status: "in_progress" });
+      }
       await ctx.db.patch(run._id, {
         currentStepIndex: Math.max(run.currentStepIndex, nextIndex),
       });
@@ -135,6 +141,9 @@ export const submitStepResult = mutation({
         status: "running",
         retriesUsed,
       });
+      if (step.taskId) {
+        await ctx.db.patch(step.taskId as any, { status: "in_progress" });
+      }
 
       await ctx.db.insert("activities", {
         type: "step_retry",
@@ -147,6 +156,9 @@ export const submitStepResult = mutation({
     // Escalate
     await ctx.db.patch(step._id, { status: "needs_human", retriesUsed });
     await ctx.db.patch(run._id, { status: "needs_human" });
+    if (step.taskId) {
+      await ctx.db.patch(step.taskId as any, { status: "blocked" });
+    }
 
     const humanId = await ensureHumanAgent(ctx);
     await ctx.db.insert("directMessages", {

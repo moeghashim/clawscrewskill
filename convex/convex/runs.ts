@@ -155,7 +155,7 @@ export const start = mutation({
       missionId: args.missionId,
       title: `${args.title} / ${first.id}`,
       description: `Workflow: ${parsed.key} (v${parsed.version})`,
-      status: "inbox",
+      status: "in_progress",
       assigneeIds: [roleAgentIds[first.role]],
       enabled: true,
       schedule: undefined,
