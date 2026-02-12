@@ -34,3 +34,33 @@ export const list = query({
     return await ctx.db.query("documents").order("desc").collect();
   },
 });
+
+export const appendMissionMemory = mutation({
+  args: {
+    missionId: v.id("missions"),
+    content: v.string(),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const docs = await ctx.db.query("documents").collect();
+    const existing = docs.find((d: any) => d.type === "mission_memory" && d.missionId === args.missionId);
+
+    const entry = args.content.trim();
+    if (!entry) return { ok: true, skipped: true };
+
+    if (existing) {
+      const next = `${existing.content || ""}\n${existing.content ? "\n" : ""}${entry}`;
+      await ctx.db.patch(existing._id, { content: next });
+      return { ok: true, docId: existing._id, created: false };
+    }
+
+    const id = await ctx.db.insert("documents", {
+      title: args.title || "Mission Memory",
+      content: entry,
+      type: "mission_memory",
+      missionId: args.missionId,
+      taskId: undefined,
+    });
+    return { ok: true, docId: id, created: true };
+  },
+});

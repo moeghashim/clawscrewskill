@@ -160,14 +160,51 @@ function runConvex(repoRoot, fnId, payload) {
   return out.trim();
 }
 
-function executeWithOpenClaw({ claim }) {
+function getMissionMemoryContext(repoRoot, missionId) {
+  try {
+    const raw = runConvex(repoRoot, "documents.js:list", {});
+    const docs = JSON.parse(raw);
+    const doc = (docs || []).find((d) => d.type === "mission_memory" && d.missionId === missionId);
+    if (!doc?.content) return "";
+    const content = String(doc.content);
+    // Keep prompt small: only latest slice.
+    return content.length > 1400 ? content.slice(-1400) : content;
+  } catch {
+    return "";
+  }
+}
+
+function appendMissionLearning(repoRoot, claim, gateJsonText) {
+  if (!claim?.missionId) return;
+  let gate = null;
+  try {
+    gate = findGateObjectDeep(JSON.parse(gateJsonText));
+  } catch {
+    gate = findGateObjectDeep(gateJsonText);
+  }
+  if (!gate) return;
+
+  const line = `- [${new Date().toISOString()}] step=${claim.stepKey} role=${claim.role} status=${gate.status} summary=${gate.summary}${gate.reason ? ` reason=${gate.reason}` : ""}`;
+  runConvex(repoRoot, "documents.js:appendMissionMemory", {
+    missionId: claim.missionId,
+    content: line,
+    title: `Mission Memory: ${claim.runTitle}`,
+  });
+}
+
+function executeWithOpenClaw({ repoRoot, claim }) {
   const sessionId = `clawscrew:${claim.runStepId}`;
   const role = claim.role || "runner";
+  const missionMemory = getMissionMemoryContext(repoRoot, claim.missionId);
   const message = [
     `You are the ${role} runner for ClawsCrew workflow execution.`,
     `Run title: ${claim.runTitle}`,
     `Step: ${claim.stepKey}`,
     `Task: ${claim.taskTitle || claim.taskId}`,
+    "",
+    missionMemory
+      ? `Mission memory context (latest):\n${missionMemory}`
+      : "Mission memory context: (empty)",
     "",
     "Return ONLY a JSON object with this shape:",
     '{"status":"PASS|FAIL","summary":"short summary","reason":"optional reason"}',
@@ -395,16 +432,26 @@ async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw, de
           runStepId: claim.runStepId,
           content,
         });
+        try {
+          appendMissionLearning(repoRoot, claim, content);
+        } catch (err) {
+          process.stderr.write(`Mission memory append failed: ${String(err?.message || err)}\n`);
+        }
 
         process.stdout.write(`Submitted PASS result for ${claim.runStepId}\n`);
       } else if (executeOpenclaw) {
         try {
-          const content = executeWithOpenClaw({ claim });
+          const content = executeWithOpenClaw({ repoRoot, claim });
           runConvex(repoRoot, "connector.js:submitResult", {
             workerId: id,
             runStepId: claim.runStepId,
             content,
           });
+          try {
+            appendMissionLearning(repoRoot, claim, content);
+          } catch (err) {
+            process.stderr.write(`Mission memory append failed: ${String(err?.message || err)}\n`);
+          }
           process.stdout.write(`Submitted OpenClaw result for ${claim.runStepId}\n`);
         } catch (err) {
           const content = JSON.stringify({
@@ -417,6 +464,11 @@ async function connector({ once, pollMs, workerId, autoPass, executeOpenclaw, de
             runStepId: claim.runStepId,
             content,
           });
+          try {
+            appendMissionLearning(repoRoot, claim, content);
+          } catch (appendErr) {
+            process.stderr.write(`Mission memory append failed: ${String(appendErr?.message || appendErr)}\n`);
+          }
           process.stderr.write(`Submitted FAIL due to executor error for ${claim.runStepId}\n`);
         }
       } else {
